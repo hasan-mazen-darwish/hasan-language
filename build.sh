@@ -1,1 +1,1 @@
-gcc main.c -o build/main
+gcc main.c libs/lexer/lexer.c -o build/main
