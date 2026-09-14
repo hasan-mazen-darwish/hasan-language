@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 typedef enum {
   TOKEN_LET,
@@ -12,3 +13,8 @@ typedef enum {
 typedef struct Token {
   TokensTypes type;
 } Token;
+
+typedef struct Lexer {
+  char *src;
+  size_t srcLength;
+} Lexer;
