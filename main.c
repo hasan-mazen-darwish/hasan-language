@@ -75,8 +75,46 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  Lexer lexer = { .src = src, .srcLength = length };
+  size_t fileNameLength = strlen(argv[1]);
+  char* fileExtension = malloc((fileNameLength + 1) * sizeof(char)); // Allocating only 5 characters because we are only watching for the .hasan
+  if(fileExtension == NULL) {
+    printf("Error allocating memory for readin g the file extension!\n");
+    return 1;
+  }
 
-  printf("The name of the file provided is %s\n", argv[1]);
+  int fileExtensionLength = 0;
+  for(int i=fileNameLength - 1; i>=0; i--) {
+    char current = argv[1][i];
+    if(current == '.') break;
+    if(current != 'h' && current != 'a' && current != 's' && current != 'n') {
+      // Early checking for the file extension. Micro optimization
+      printf("Invalid file extension. It must be .hasan\n");
+      return 1;
+    }
+
+    if(fileExtension > 0) {
+      memmove(&fileExtension[1], &fileExtension[0], fileExtensionLength*sizeof(char));
+    }
+
+    fileExtension[0] = current;
+    fileExtensionLength++;
+  }
+
+  char *temp = realloc(fileExtension, (fileExtensionLength + 1) * sizeof(char));
+  if(temp == NULL) {
+    printf("Error reallocating memory for the new file extension allocation!\n");
+    return 1;
+  }
+  fileExtension = temp;
+  fileExtension[fileExtensionLength] = '\0';
+
+  if(fileExtensionLength != 5 || strcmp(fileExtension, "hasan") != 0) {
+    printf("Invalid file extension. It must be .hasan\n");
+    return 1;
+  }
+  free(fileExtension);
+
+  Lexer lexer = { .src = src, .srcLength = length, .tokens = NULL };
+
   return 0;
 }
