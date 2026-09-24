@@ -17,4 +17,5 @@ typedef struct Token {
 typedef struct Lexer {
   char *src;
   size_t srcLength;
+  Token **tokens; // an array of arrays of tokens. Every line is going to be an array of tokens.
 } Lexer;
