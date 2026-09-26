@@ -4,6 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+void lexer_clean(Lexer *lexer) {
+  for (size_t i = 0; i < lexer->lines; i++) {
+    free(lexer->tokens[i]);
+  }
+  free(lexer->tokens);
+  free(lexer->src);
+
+  // Unnecessary. Just nice-to-haves
+  lexer->srcLength = 0;
+  lexer->lines = 0;
+}
+
 Lexer *lexer_tokenify(Lexer *lexer) {
   // Fixing the lexer src to not get into any problem
   lexer->src[lexer->srcLength] = '\0';
@@ -24,6 +36,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   if (lexer->tokens == NULL) {
     printf("Error allocating memory for the tokens addresses!\n");
     free(lBuffer);
+    lexer_clean(lexer);
     return NULL;
   }
 
@@ -35,6 +48,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       malloc(tokensInitialAllocationSize * sizeof(Token));
   if (lexer->tokens[currentLine] == NULL) {
     printf("Failed to allocate memory for the tokens of the initial line!\n");
+    free(lBuffer);
+    lexer_clean(lexer);
     return NULL;
   }
   char *p = lexer->src;
@@ -42,6 +57,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
     currentLineCursor++;
     if (*p == '\n') {
       currentLine++;
+      lexer->lines++;
       if (currentLine + 1 >= numberOfLinesAllocations) {
         numberOfLinesAllocations *= 2;
         Token **temp =
@@ -50,6 +66,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           printf("Error reallocating memory for tokenizing new lines of the "
                  "file!\n");
           free(lBuffer);
+          lexer_clean(lexer);
           return NULL;
         }
         lexer->tokens = temp;
@@ -68,6 +85,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
                               tokensAllocationCapacity * sizeof(Token));
         if (temp == NULL) {
           printf("Failed reallocating memory for the END_OF_LINE token!\n");
+          lexer_clean(lexer);
+          free(lBuffer);
           return NULL;
         }
         lexer->tokens[currentLine - 1] = temp;
@@ -88,6 +107,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       if (temp == NULL) {
         printf("Error reallocating the buffer in the resetting process in the "
                "new line logic!\n");
+        free(lBuffer);
+        lexer_clean(lexer);
         return NULL;
       }
       lBuffer = temp;
@@ -99,6 +120,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           malloc(tokensAllocationCapacity * sizeof(Token));
       if (lexer->tokens[currentLine] == NULL) {
         printf("Failed allocating memory for the new lines tokens!\n");
+        free(lBuffer);
+        lexer_clean(lexer);
         return NULL;
       }
 
@@ -127,7 +150,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       char *temp = realloc(lBuffer, lCapacity * sizeof(char));
       if (temp == NULL) {
         printf("Failed reallocating memory for the lexeme buffer!\n");
-        free(lexer->tokens);
+        free(lBuffer);
+        lexer_clean(lexer);
         return NULL;
       }
       lBuffer = temp;
