@@ -9,12 +9,14 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   lexer->src[lexer->srcLength] = '\0';
 
   size_t lLength = 0; // A shortcut for lexemeLength
+  size_t initialLCapacity = 100;
   size_t lCapacity =
-      100; // For detecting the allocation capacity of the lBuffer.
+      initialLCapacity; // For detecting the allocation capacity of the lBuffer.
   char *lBuffer =
       malloc(lCapacity * sizeof(char)); // A shortcut for lexemeBuffer
 
   size_t currentLine = 0; // 0-indexed, just like then tokens arrays pointer
+  size_t currentLineCursor = 0;
   size_t numberOfLinesAllocations = 4;
   int isString = 0;
 
@@ -26,7 +28,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   }
 
   size_t tokensInitialAllocationSize = 5;
-  size_t currentTokensAllocationSize = tokensInitialAllocationSize;
+  size_t tokensNumberInCurrentLine = 0;
+  size_t tokensAllocationCapacity = tokensInitialAllocationSize;
 
   lexer->tokens[currentLine] =
       malloc(tokensInitialAllocationSize * sizeof(Token));
@@ -36,6 +39,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   }
   char *p = lexer->src;
   while (*p) {
+    currentLineCursor++;
     if (*p == '\n') {
       currentLine++;
       if (currentLine + 1 >= numberOfLinesAllocations) {
@@ -50,26 +54,57 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         }
         lexer->tokens = temp;
       }
+      // The logic of tokenizing after hitting a new line:
 
+      // Now, we will be adding the END_OF_LINE token after we finish the last
+      // token, then we will reset the lBuffer and lLength if we weren't in a
+      // string. Note that we are using currentLine-1 since we styarted this if
+      // statement with adding one to the currentLine
+
+      if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+        tokensAllocationCapacity += 1; // Adding only one just because we are
+                                       // adding one and only one token.
+        Token *temp = realloc(lexer->tokens[currentLine - 1],
+                              tokensAllocationCapacity * sizeof(Token));
+        if (temp == NULL) {
+          printf("Failed reallocating memory for the END_OF_LINE token!\n");
+          return NULL;
+        }
+        lexer->tokens[currentLine - 1] = temp;
+      }
+      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].line =
+          currentLine; // This is for user readability, not 0-indexed.
+      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].lexeme =
+          strdup(lBuffer);
+      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].start =
+          currentLineCursor;
+      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].type =
+          END_OF_LINE;
+
+      // Cleaning the lexeme info after the tokenizing
+      lLength = 0;
+      lCapacity = initialLCapacity;
+      char *temp = realloc(lBuffer, lCapacity * sizeof(char));
+      if (temp == NULL) {
+        printf("Error reallocating the buffer in the resetting process in the "
+               "new line logic!\n");
+        return NULL;
+      }
+      lBuffer = temp;
+
+      // Finally, initializing a new Tokens array for the next line (which is
+      // now currentLine)
+      tokensAllocationCapacity = tokensInitialAllocationSize;
       lexer->tokens[currentLine] =
-          malloc(tokensInitialAllocationSize * sizeof(Token));
+          malloc(tokensAllocationCapacity * sizeof(Token));
       if (lexer->tokens[currentLine] == NULL) {
-        printf("Failed to allocate memory for the tokens of the new line!\n");
+        printf("Failed allocating memory for the new lines tokens!\n");
         return NULL;
       }
 
-      if (lLength >= lCapacity) {
-        lCapacity *= 2;
-        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-        if (temp == NULL) {
-          printf("Failed reallocating memory for the lexeme buffer!\n");
-          free(lexer->tokens);
-          return NULL;
-        }
-        lBuffer = temp;
-      }
-      // TODO: when hitting a new line, consider also doing the exact same
-      // thing as when a whitespace is hit after a keyword
+      // Continuing properly in the loops
+      tokensNumberInCurrentLine = 0;
+      currentLineCursor = 0;
       p++;
       continue;
     }
@@ -108,6 +143,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
     p++;
   }
+
+  // Freeing the buffer after being useless
+  free(lBuffer);
 
   return lexer;
 }
