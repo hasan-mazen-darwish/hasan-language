@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
   }
   free(fileExtension);
 
-  Lexer lexer = {.src = src, .srcLength = length, .tokens = NULL};
+  Lexer lexer = {.src = src, .srcLength = length, .tokens = NULL, .lines = 0};
 
   return 0;
 }
