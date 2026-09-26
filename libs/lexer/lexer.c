@@ -4,6 +4,34 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct ClassifyTokenReturn {
+  int pending;
+  TokensTypes tokenType;
+} ClassifyTokenReturn;
+
+static ClassifyTokenReturn classify_token(char *lexeme, size_t lexemeLength,
+                                          int isString) {
+  ClassifyTokenReturn returning = {0};
+
+  if (isString != 0) {
+    returning.pending = 1;
+    returning.tokenType = VARIABLE_STRING;
+  } else if (strcmp(lexeme, "print") == 0)
+    returning.tokenType = FUNCTION_PRINT;
+  else if (strcmp(lexeme, "(") == 0)
+    returning.tokenType = SYMBOL_LEFT_PARENTHESIS;
+  else if (strcmp(lexeme, ")") == 0)
+    returning.tokenType = SYMBOL_RIGHT_PARENTHESIS;
+  else if (strcmp(lexeme, "=") == 0)
+    returning.tokenType = SYMBOL_EQUALS;
+  else if (strcmp(lexeme, "+") == 0)
+    returning.tokenType = SYMBOL_PLUS;
+  else if (strcmp(lexeme, "with") == 0)
+    returning.tokenType = KEYWORD_WITH;
+
+  return returning;
+}
+
 void lexer_clean(Lexer *lexer) {
   for (size_t i = 0; i < lexer->lines; i++) {
     free(lexer->tokens[i]);
