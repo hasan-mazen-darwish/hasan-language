@@ -5,6 +5,9 @@
 #include <string.h>
 
 Lexer *lexer_tokenify(Lexer *lexer) {
+  // Fixing the lexer src to not get into any problem
+  lexer->src[lexer->srcLength] = '\0';
+
   size_t lLength = 0; // A shortcut for lexemeLength
   size_t lCapacity =
       100; // For detecting the allocation capacity of the lBuffer.
