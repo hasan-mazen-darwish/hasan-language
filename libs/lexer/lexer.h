@@ -6,7 +6,6 @@ typedef enum {
   VARIABLE_NUMBER_KEYWORD,
 
   // Ends
-  END_OF_FILE,
   END_OF_LINE
 } TokensTypes;
 
