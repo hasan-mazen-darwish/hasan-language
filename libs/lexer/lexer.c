@@ -74,6 +74,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
     return NULL;
   }
   char *p = lexer->src;
+  lexer->lines = 1;
   while (*p) {
     currentLineCursor++;
     if (*p == '\n') {
@@ -169,8 +170,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
       lexer->tokens[previousLine][tokensNumberInCurrentLine].line =
           previousLine + 1; // This is for user readability, not 0-indexed.
-      lexer->tokens[previousLine][tokensNumberInCurrentLine].lexeme =
-          strdup(lBuffer);
+      lexer->tokens[previousLine][tokensNumberInCurrentLine].lexeme = "";
       lexer->tokens[previousLine][tokensNumberInCurrentLine].start =
           currentLineCursor;
       lexer->tokens[previousLine][tokensNumberInCurrentLine].type = END_OF_LINE;
@@ -294,6 +294,30 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
   // Freeing the buffer after being useless
   free(lBuffer);
+
+  // Adding a final END_OF_LINE token to the last line of tokens.
+  // Please note that the old values of the tokensNumberInCurrentLine and
+  // tokensAllocationCapacity are still unchanged because we did not hit a new
+  // line!
+  if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+    tokensAllocationCapacity++;
+    Token *temp = realloc(lexer->tokens[lexer->lines - 1],
+                          tokensAllocationCapacity * sizeof(Token));
+    if (temp == NULL) {
+      printf("Error reallocating memory for the END_OF_LINE of the last line "
+             "of the source code tokens!\n");
+      free(lBuffer);
+      lexer_clean(lexer);
+      return NULL;
+    }
+    lexer->tokens[lexer->lines - 1] = temp;
+  }
+  lexer->tokens[lexer->lines - 1][tokensNumberInCurrentLine].line =
+      lexer->lines; // Again, not 0-indexed
+  lexer->tokens[lexer->lines - 1][tokensNumberInCurrentLine].lexeme = "";
+  lexer->tokens[lexer->lines - 1][tokensNumberInCurrentLine].start =
+      lexer->srcLength - 1;
+  lexer->tokens[lexer->lines - 1][tokensNumberInCurrentLine].type = END_OF_LINE;
 
   return lexer;
 }
