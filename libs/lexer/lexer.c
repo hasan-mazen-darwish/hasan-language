@@ -99,12 +99,40 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         TokensTypes classifiedToken =
             classify_token(&lBuffer, &lLength, &isString);
         if (classifiedToken == UNKNOWN) {
-          printf("Error tokenizing the source code: unknown token at %zu:%zu",
-                 previousLine, currentLineCursor - lLength);
+          printf(
+              "Error tokenizing the source code: unknown token at %zu:%zu.\n",
+              previousLine, currentLineCursor - lLength);
           free(lBuffer);
           lexer_clean(lexer);
           return NULL;
         }
+
+        if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+          // We will only add 2 slots: one for this token, and another for the
+          // END_OF_LINE token.
+          tokensAllocationCapacity += 2;
+          Token *temp = realloc(lexer->tokens[previousLine],
+                                tokensAllocationCapacity * sizeof(Token));
+          if (temp == NULL) {
+            printf("Failed reallocating memory for the last token of the %zu "
+                   "line!\n",
+                   previousLine);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+          lexer->tokens[previousLine] = temp;
+        }
+
+        lexer->tokens[previousLine][tokensNumberInCurrentLine].line =
+            previousLine + 1; // Not 0-indexed for readability.
+        lexer->tokens[previousLine][tokensNumberInCurrentLine].lexeme =
+            strdup(lBuffer);
+        lexer->tokens[previousLine][tokensNumberInCurrentLine].start =
+            currentLineCursor - lLength;
+        lexer->tokens[previousLine][tokensNumberInCurrentLine].type =
+            classifiedToken;
+        tokensNumberInCurrentLine++;
 
         lLength = 0;
         lCapacity = initialLCapacity;
