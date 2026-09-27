@@ -23,7 +23,8 @@ typedef enum {
   KEYWORD_WITH,
 
   // Generals
-  VARIABLE
+  VARIABLE,
+  UNKNOWN
 } TokensTypes;
 
 typedef struct Token {
