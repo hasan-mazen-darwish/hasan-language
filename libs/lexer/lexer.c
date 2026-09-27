@@ -157,7 +157,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         Token *temp = realloc(lexer->tokens[previousLine],
                               tokensAllocationCapacity * sizeof(Token));
         if (temp == NULL) {
-          printf("Failed reallocating memory for the END_OF_LINE token!\n");
+          printf("Failed reallocating memory for the END_OF_LINE token in the "
+                 "%zu line!\n",
+                 previousLine);
           lexer_clean(lexer);
           free(lBuffer);
           return NULL;
@@ -166,7 +168,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       }
 
       lexer->tokens[previousLine][tokensNumberInCurrentLine].line =
-          currentLine; // This is for user readability, not 0-indexed.
+          previousLine + 1; // This is for user readability, not 0-indexed.
       lexer->tokens[previousLine][tokensNumberInCurrentLine].lexeme =
           strdup(lBuffer);
       lexer->tokens[previousLine][tokensNumberInCurrentLine].start =
