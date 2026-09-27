@@ -101,7 +101,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         if (classifiedToken == UNKNOWN) {
           printf(
               "Error tokenizing the source code: unknown token at %zu:%zu.\n",
-              previousLine, currentLineCursor - lLength);
+              previousLine + 1, currentLineCursor - lLength);
           free(lBuffer);
           lexer_clean(lexer);
           return NULL;
@@ -116,7 +116,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           if (temp == NULL) {
             printf("Failed reallocating memory for the last token of the %zu "
                    "line!\n",
-                   previousLine);
+                   previousLine + 1);
             free(lBuffer);
             lexer_clean(lexer);
             return NULL;
@@ -159,7 +159,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         if (temp == NULL) {
           printf("Failed reallocating memory for the END_OF_LINE token in the "
                  "%zu line!\n",
-                 previousLine);
+                 previousLine + 1);
           lexer_clean(lexer);
           free(lBuffer);
           return NULL;
@@ -213,6 +213,54 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       // whitespaces after the non-string tokens
 
       if (lLength > 0) {
+        TokensTypes classifiedToken =
+            classify_token(&lBuffer, &lLength, &isString);
+        if (classifiedToken == UNKNOWN) {
+          printf(
+              "Error tokenizing the source code: unknown token at %zu:%zu.\n",
+              currentLine + 1, currentLineCursor - lLength);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+
+        if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+          tokensAllocationCapacity *= 2;
+          Token *temp = realloc(lexer->tokens[currentLine],
+                                tokensAllocationCapacity * sizeof(Token));
+          if (temp == NULL) {
+            printf("Error reallocating the tokens array for a new token at "
+                   "line %zu!\n",
+                   currentLine + 1);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+          lexer->tokens[currentLine] = temp;
+        }
+
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+            currentLine + 1;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+            strdup(lBuffer);
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+            currentLineCursor - lLength;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+            classifiedToken;
+
+        tokensNumberInCurrentLine++;
+        lLength = 0;
+        lCapacity = initialLCapacity;
+        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
+        if (temp == NULL) {
+          printf("Error resetting the lexeme buffer after reading the in-line "
+                 "token at line %zu!\n",
+                 currentLine + 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+        lBuffer = temp;
       }
 
       p++;
