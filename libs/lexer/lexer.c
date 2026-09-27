@@ -4,32 +4,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct ClassifyTokenReturn {
-  int pending;
-  TokensTypes tokenType;
-} ClassifyTokenReturn;
-
-static ClassifyTokenReturn classify_token(char **lexeme, size_t *lexemeLength,
-                                          int *isString) {
-  ClassifyTokenReturn returning = {0};
-
-  if (*isString != 0) {
-    returning.pending = 1;
-    returning.tokenType = VARIABLE_STRING;
-  } else if (strcmp(*lexeme, "print") == 0)
-    returning.tokenType = FUNCTION_PRINT;
+static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
+                                  int *isString) {
+  if (isString)
+    return VARIABLE_STRING;
+  else if (strcmp(*lexeme, "print") == 0)
+    return FUNCTION_PRINT;
   else if (strcmp(*lexeme, "(") == 0)
-    returning.tokenType = SYMBOL_LEFT_PARENTHESIS;
+    return SYMBOL_LEFT_PARENTHESIS;
   else if (strcmp(*lexeme, ")") == 0)
-    returning.tokenType = SYMBOL_RIGHT_PARENTHESIS;
+    return SYMBOL_RIGHT_PARENTHESIS;
   else if (strcmp(*lexeme, "=") == 0)
-    returning.tokenType = SYMBOL_EQUALS;
+    return SYMBOL_EQUALS;
   else if (strcmp(*lexeme, "+") == 0)
-    returning.tokenType = SYMBOL_PLUS;
+    return SYMBOL_PLUS;
   else if (strcmp(*lexeme, "with") == 0)
-    returning.tokenType = KEYWORD_WITH;
+    return KEYWORD_WITH;
 
-  return returning;
+  // For unspecified tokens:
+  return UNKNOWN;
 }
 
 void lexer_clean(Lexer *lexer) {
@@ -84,6 +77,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   while (*p) {
     currentLineCursor++;
     if (*p == '\n') {
+      size_t previousLine = currentLine;
       currentLine++;
       lexer->lines++;
       if (currentLine + 1 >= numberOfLinesAllocations) {
@@ -100,6 +94,29 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         lexer->tokens = temp;
       }
       // The logic of tokenizing after hitting a new line:
+      // Here, we will tokenize the lBuffer if it's not null
+      if (lLength > 0) {
+        TokensTypes classifiedToken =
+            classify_token(&lBuffer, &lLength, &isString);
+        if (classifiedToken == UNKNOWN) {
+          printf("Error tokenizing the source code: unknown token at %zu:%zu",
+                 previousLine, currentLineCursor - lLength);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+
+        lLength = 0;
+        lCapacity = initialLCapacity;
+        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
+        if (temp == NULL) {
+          printf("Error reallocating the buffer in the resetting process in "
+                 "the new line logic! (The old lBuffer is being tokenized)\n");
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+      }
 
       // Now, we will be adding the END_OF_LINE token after we finish the last
       // token, then we will reset the lBuffer and lLength if we weren't in a
@@ -109,7 +126,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
         tokensAllocationCapacity += 1; // Adding only one just because we are
                                        // adding one and only one token.
-        Token *temp = realloc(lexer->tokens[currentLine - 1],
+        Token *temp = realloc(lexer->tokens[previousLine],
                               tokensAllocationCapacity * sizeof(Token));
         if (temp == NULL) {
           printf("Failed reallocating memory for the END_OF_LINE token!\n");
@@ -117,16 +134,16 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           free(lBuffer);
           return NULL;
         }
-        lexer->tokens[currentLine - 1] = temp;
+        lexer->tokens[previousLine] = temp;
       }
-      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].line =
+
+      lexer->tokens[previousLine][tokensNumberInCurrentLine].line =
           currentLine; // This is for user readability, not 0-indexed.
-      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].lexeme =
+      lexer->tokens[previousLine][tokensNumberInCurrentLine].lexeme =
           strdup(lBuffer);
-      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].start =
+      lexer->tokens[previousLine][tokensNumberInCurrentLine].start =
           currentLineCursor;
-      lexer->tokens[currentLine - 1][tokensNumberInCurrentLine].type =
-          END_OF_LINE;
+      lexer->tokens[previousLine][tokensNumberInCurrentLine].type = END_OF_LINE;
 
       // Cleaning the lexeme info after the tokenizing
       lLength = 0;
@@ -140,6 +157,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         return NULL;
       }
       lBuffer = temp;
+      lBuffer[0] = '\0';
 
       // Finally, initializing a new Tokens array for the next line (which is
       // now currentLine)
