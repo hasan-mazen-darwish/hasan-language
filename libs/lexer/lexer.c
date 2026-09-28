@@ -20,6 +20,8 @@ static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
     return SYMBOL_PLUS;
   else if (strcmp(*lexeme, "with") == 0)
     return KEYWORD_WITH;
+  else if (strcmp(*lexeme, "number") == 0)
+    return VARIABLE_NUMBER_KEYWORD;
 
   // For unspecified tokens:
   return UNKNOWN;
@@ -87,6 +89,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   size_t currentLineCursor = 0;
   size_t numberOfLinesAllocations = 4;
   int isString = 0;
+  int isRecordingVariable = 0; // Checks if the recording token is going to be
+                               // labeled VARIABLE_something.
+  TokensTypes recordingVariableType = VARIABLE;
 
   lexer->tokens = malloc(numberOfLinesAllocations * sizeof(Token *));
   if (lexer->tokens == NULL) {
@@ -132,8 +137,15 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       // The logic of tokenizing after hitting a new line:
       // Here, we will tokenize the lBuffer if it's not null
       if (lLength > 0) {
-        TokensTypes classifiedToken =
-            classify_token(&lBuffer, &lLength, &isString);
+        TokensTypes classifiedToken;
+        if (isRecordingVariable == 1) {
+          classifiedToken = recordingVariableType;
+          recordingVariableType = VARIABLE;
+          isRecordingVariable = 0;
+        } else {
+          classifiedToken = classify_token(&lBuffer, &lLength, &isString);
+        }
+
         if (classifiedToken == UNKNOWN) {
           printf(
               "Error tokenizing the source code: unknown token at %zu:%zu.\n",
@@ -181,6 +193,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           return NULL;
         }
       }
+      isRecordingVariable = 0;
+      recordingVariableType = VARIABLE;
 
       // Now, we will be adding the END_OF_LINE token after we finish the last
       // token, then we will reset the lBuffer and lLength if we weren't in a
@@ -248,8 +262,18 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       // whitespaces after the non-string tokens
 
       if (lLength > 0) {
-        TokensTypes classifiedToken =
-            classify_token(&lBuffer, &lLength, &isString);
+        TokensTypes classifiedToken;
+        // We check if there is a variable being recorded first:
+        if (isRecordingVariable == 1) {
+          classifiedToken = recordingVariableType;
+          recordingVariableType = VARIABLE;
+          isRecordingVariable = 0;
+        }
+
+        // Otherwise, we don't take care of any variable, because there isn't.
+        else {
+          classifiedToken = classify_token(&lBuffer, &lLength, &isString);
+        }
         if (classifiedToken == UNKNOWN) {
           printf(
               "Error tokenizing the source code: unknown token at %zu:%zu.\n",
@@ -283,6 +307,18 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
             classifiedToken;
 
+        // Finally, we will check if the token will require recording a variable
+        // or not.
+        if (classifiedToken == VARIABLE_NUMBER_KEYWORD) {
+          isRecordingVariable = 1;
+          recordingVariableType = VARIABLE_NUMBER;
+        }
+
+        // TODO: Add a hash table for the variables, and attach them to the
+        // lexer, so the parser, AST, and interpreter won't do additional
+        // processing to check if the variable do exist or not. That's the lexer
+        // mission anyways.
+
         tokensNumberInCurrentLine++;
         lLength = 0;
         lCapacity = initialLCapacity;
@@ -300,6 +336,68 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
       p++;
       continue;
+    }
+
+    // Now, no whitespace detected, but before writing into the buffer, we need
+    // to check if the buffer previously is a string or not, if not, we will
+    // check it.
+    if (isString == 0) {
+      // First of all, we will check if we are recording a variable, and the
+      // user tried to insert a digit as the first character of the variable
+      // name:
+      if (isRecordingVariable == 1 && isdigit(*p) && lLength == 0) {
+        printf("Error tokenizing the source code: Cannot use a number digit as "
+               "the beginning of a variable name at %zu:%zu",
+               currentLine + 1, currentLineCursor);
+        free(lBuffer);
+        lexer_clean(lexer);
+        return NULL;
+      }
+
+      // And then, we will check if the user has written a character that is not
+      // valid inside the variable name. So, we will therefore tokenize the
+      // variable and then check the symbol:
+      else if (isRecordingVariable == 1 &&
+               is_variable_character_valid(p) == 0) {
+        if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+          tokensAllocationCapacity *= 2;
+          Token *temp = realloc(lexer->tokens[currentLine],
+                                tokensAllocationCapacity * sizeof(Token));
+          if (temp == NULL) {
+            printf("Error reallocating new memory for the tokens of the "
+                   "variable name and the symbol after it at line %zu!\n",
+                   currentLine + 1);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+          lexer->tokens[currentLine] = temp;
+        }
+
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+            strdup(lBuffer);
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+            currentLine + 1; // The current line is not 0-indexed.
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+            currentLineCursor - lLength;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+            recordingVariableType;
+        tokensNumberInCurrentLine++;
+        lLength = 0;
+        lCapacity = initialLCapacity;
+        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
+        if (temp == NULL) {
+          printf("Error resetting the lexeme buffer after reading the in-line "
+                 "token at line %zu!\n",
+                 currentLine + 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+        lBuffer = temp;
+        isRecordingVariable = 0;
+        recordingVariableType = VARIABLE;
+      }
     }
 
     // No whitespace detected. Therefore, we will write to the buffer.
