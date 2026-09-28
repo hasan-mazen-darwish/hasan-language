@@ -7,6 +7,10 @@ typedef enum {
   VARIABLE_STRING,
   VARIABLE_STRING_KEYWORD,
 
+  // Data Types
+  DATA_NUMBER,
+  DATA_STRING,
+
   // Built-in functions into the language
   FUNCTION_PRINT,
 

@@ -18,6 +18,12 @@ static char *getTokenText(TokensTypes type) {
   case VARIABLE_STRING_KEYWORD:
     return "VARIABLE_STRING_KEYWORD";
 
+  // Data Types
+  case DATA_NUMBER:
+    return "DATA_NUMBER";
+  case DATA_STRING:
+    return "DATA_STRING";
+
   // Built-in function into the language:
   case FUNCTION_PRINT:
     return "FUNCTION_PRINT";
