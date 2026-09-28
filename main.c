@@ -1,4 +1,4 @@
-#include "./libs/lexer/lexer.h"
+#include "./libs/lexer/lexerDebug.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,6 +123,12 @@ int main(int argc, char **argv) {
   free(fileExtension);
 
   Lexer lexer = {.src = src, .srcLength = length, .tokens = NULL, .lines = 0};
+  lexer_tokenify(&lexer);
+  if (lexer.tokens == NULL || lexer.src == NULL) {
+    printf("Error happened at lexifying (tokenizing) the source code!\n");
+    exit(1);
+  }
+  lexer_debug_tokens(&lexer);
 
   return 0;
 }

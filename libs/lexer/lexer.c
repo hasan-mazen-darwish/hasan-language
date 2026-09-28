@@ -6,7 +6,7 @@
 
 static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
                                   int *isString) {
-  if (isString)
+  if (*isString == 1)
     return VARIABLE_STRING;
   else if (strcmp(*lexeme, "print") == 0)
     return FUNCTION_PRINT;
