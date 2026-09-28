@@ -1,4 +1,1 @@
-number a = 10
-number b = 20
-
-print with (a+b)
+print with ( print + print )
