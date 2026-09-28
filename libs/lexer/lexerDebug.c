@@ -62,13 +62,15 @@ void lexer_debug_tokens(Lexer *lexer) {
         printf("!!ERROR!! a token at line %d is NULL.\n", i);
         break;
       }
+      if ((*p).type == END_OF_LINE)
+        break;
       type = (*p).type;
       printf(COLORS_TOKEN "%s" COLORS_TOKEN_LEXEME "(%s)" COLORS_RESET ", ",
              getTokenText((*p).type), (*p).lexeme);
       p++;
     }
-    printf(COLORS_TOKEN "%s" COLORS_TOKEN_LEXEME "(%s)" COLORS_RESET "\n",
-           getTokenText((*p).type), (*p).lexeme);
+    printf(COLORS_TOKEN "%s" COLORS_TOKEN_LEXEME "(%s)" COLORS_RESET,
+           getTokenText(END_OF_LINE), "");
     printf("\n");
   }
 }
