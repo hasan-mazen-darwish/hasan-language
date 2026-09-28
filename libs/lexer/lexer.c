@@ -37,6 +37,41 @@ void lexer_clean(Lexer *lexer) {
   lexer->lines = 0;
 }
 
+// This function will check if the character given can be inside a variable name
+// or cannot. For example, _ can be found inside a variable, but ; cannot.
+static int is_variable_character_valid(char *character) {
+  if (isalpha(*character))
+    return 1;
+  if (isdigit(*character))
+    return 1;
+
+  switch (*character) {
+  case '_':
+    return 1;
+  }
+  return 0;
+}
+
+static int is_symbol(char *character) {
+  return *character == '=' || *character == '+' || *character == '(' ||
+         *character == ')';
+}
+
+static TokensTypes symbol_to_token(char *character) {
+  switch (*character) {
+  case '=':
+    return SYMBOL_EQUALS;
+  case '+':
+    return SYMBOL_PLUS;
+  case '(':
+    return SYMBOL_LEFT_PARENTHESIS;
+  case ')':
+    return SYMBOL_RIGHT_PARENTHESIS;
+  default:
+    return UNKNOWN;
+  }
+}
+
 Lexer *lexer_tokenify(Lexer *lexer) {
   // Fixing the lexer src to not get into any problem
   lexer->src[lexer->srcLength] = '\0';
