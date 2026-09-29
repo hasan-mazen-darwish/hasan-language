@@ -91,6 +91,10 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   int isString = 0;
   int isRecordingVariable = 0; // Checks if the recording token is going to be
                                // labeled VARIABLE_something.
+  int isRecordingNumber = 0; // Checking if we are recording a number, so we can
+                             // tokenize it into DATA_NUMBER.
+  int isDotSpotted =
+      0; // This is for checking cases like 1.2.1 where it is invalid
   TokensTypes recordingVariableType = VARIABLE;
 
   lexer->tokens = malloc(numberOfLinesAllocations * sizeof(Token *));
@@ -142,6 +146,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           classifiedToken = recordingVariableType;
           recordingVariableType = VARIABLE;
           isRecordingVariable = 0;
+        } else if (isRecordingNumber == 1) {
+          classifiedToken = DATA_NUMBER;
+          isRecordingNumber = 0;
         } else {
           classifiedToken = classify_token(&lBuffer, &lLength, &isString);
         }
@@ -268,6 +275,12 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           classifiedToken = recordingVariableType;
           recordingVariableType = VARIABLE;
           isRecordingVariable = 0;
+        }
+
+        // Then we check if we are recording a number data:
+        else if (isRecordingNumber == 1) {
+          classifiedToken = DATA_NUMBER;
+          isRecordingNumber = 0;
         }
 
         // Otherwise, we don't take care of any variable, because there isn't.
@@ -397,6 +410,70 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         lBuffer = temp;
         isRecordingVariable = 0;
         recordingVariableType = VARIABLE;
+      }
+
+      // Now, we will check if the buffer starts with a digit so we define a
+      // number:
+      else if (isdigit(*p) && isRecordingNumber == 0 &&
+               isRecordingVariable == 0) {
+        isRecordingNumber = 1;
+      }
+
+      // Now, as we are actually recording a number; we will be watching for the
+      // dot:
+      else if (*p == '.' && isRecordingNumber == 1) {
+        if (isDotSpotted == 1) {
+          printf("Error tokenizing the source code: Cannot use two dots inside "
+                 "the number, at %zu:%zu.\n",
+                 currentLine + 1, currentLineCursor);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        } else
+          isDotSpotted = 1;
+      }
+
+      // Now, we will check if we are watching a number value, but not a decimal
+      // point nor a digit is recorded, we will terminate the number and add
+      // it's value to the tokens array:
+      else if (isRecordingNumber == 1 && (*p != '.' && isdigit(*p) == 0)) {
+        if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+          tokensAllocationCapacity *= 2;
+          Token *temp = realloc(lexer->tokens[currentLine],
+                                tokensAllocationCapacity * sizeof(Token));
+          if (temp == NULL) {
+            printf("Error reallocating new memory for the tokens of the "
+                   "number data and whatever after it at line %zu!\n",
+                   currentLine + 1);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+          lexer->tokens[currentLine] = temp;
+        }
+
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+            strdup(lBuffer);
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+            currentLine + 1; // The current line is not 0-indexed.
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+            currentLineCursor - lLength;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+            DATA_NUMBER;
+        tokensNumberInCurrentLine++;
+        lLength = 0;
+        lCapacity = initialLCapacity;
+        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
+        if (temp == NULL) {
+          printf("Error resetting the lexeme buffer after reading the in-line "
+                 "token at line %zu!\n",
+                 currentLine + 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+        lBuffer = temp;
+        isRecordingNumber = 0;
       }
     }
 
