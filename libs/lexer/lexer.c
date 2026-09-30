@@ -154,9 +154,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         }
 
         if (classifiedToken == UNKNOWN) {
-          printf(
-              "Error tokenizing the source code: unknown token at %zu:%zu.\n",
-              previousLine + 1, currentLineCursor - lLength);
+          printf("Error tokenizing the source code: unknown token \"%s\" at "
+                 "%zu:%zu.\n",
+                 lBuffer, previousLine + 1, currentLineCursor - lLength);
           free(lBuffer);
           lexer_clean(lexer);
           return NULL;
@@ -283,14 +283,34 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           isRecordingNumber = 0;
         }
 
-        // Otherwise, we don't take care of any variable, because there isn't.
         else {
           classifiedToken = classify_token(&lBuffer, &lLength, &isString);
         }
+
+        // If it is a symbol, we take the corresponding token:
+        if (is_symbol(lBuffer)) {
+          classifiedToken = symbol_to_token(lBuffer);
+          char symbol = *lBuffer;
+          char *temp = realloc(lBuffer, 2 * sizeof(char));
+          if (temp == NULL) {
+            printf("Error reallocating the lexeme buffer in order to fit the "
+                   "symbol after the whitespace at %zu:%zu!\n",
+                   currentLine + 1, currentLineCursor - 1);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+          lBuffer = temp;
+          lLength = 1;
+          lCapacity = initialLCapacity;
+          lBuffer[0] = symbol;
+          lBuffer[1] = '\0';
+        }
+
         if (classifiedToken == UNKNOWN) {
-          printf(
-              "Error tokenizing the source code: unknown token at %zu:%zu.\n",
-              currentLine + 1, currentLineCursor - lLength);
+          printf("Error tokenizing the source code: unknown token \"%s\" at "
+                 "%zu:%zu.\n",
+                 lBuffer, currentLine + 1, currentLineCursor - lLength);
           free(lBuffer);
           lexer_clean(lexer);
           return NULL;
@@ -319,6 +339,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
             currentLineCursor - lLength;
         lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
             classifiedToken;
+        tokensNumberInCurrentLine++;
 
         // Finally, we will check if the token will require recording a variable
         // or not.
@@ -332,7 +353,6 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         // processing to check if the variable do exist or not. That's the lexer
         // mission anyways.
 
-        tokensNumberInCurrentLine++;
         lLength = 0;
         lCapacity = initialLCapacity;
         char *temp = realloc(lBuffer, lCapacity * sizeof(char));
@@ -371,7 +391,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       // valid inside the variable name. So, we will therefore tokenize the
       // variable and then check the symbol:
       else if (isRecordingVariable == 1 &&
-               is_variable_character_valid(p) == 0) {
+               is_variable_character_valid(p) == 0 && lLength > 0) {
         if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
           tokensAllocationCapacity *= 2;
           Token *temp = realloc(lexer->tokens[currentLine],
@@ -410,17 +430,218 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         lBuffer = temp;
         isRecordingVariable = 0;
         recordingVariableType = VARIABLE;
+
+        // Now checking the current symbol if it is a valid symbol or not:
+        if (is_symbol(p) == 0) {
+          printf("Error tokenizing the source code: cannot identify symbol "
+                 "'%c' at %zu:%zu.\n",
+                 *p, currentLine + 1, currentLineCursor - 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+
+        TokensTypes symbolToken = symbol_to_token(p);
+        if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+          tokensAllocationCapacity *= 2;
+          Token *temp = realloc(lexer->tokens[currentLine],
+                                tokensAllocationCapacity * sizeof(Token));
+          if (temp == NULL) {
+            printf("Error reallocating new memory for the tokens of the "
+                   "variable name and the symbol after it at line %zu!\n",
+                   currentLine + 1);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+          lexer->tokens[currentLine] = temp;
+        }
+        char *lexeme = malloc(2 * sizeof(char));
+        if (lexeme == NULL) {
+          printf("Error generating a memory allocation for the lexeme of the "
+                 "symbol after the variable at line %zu!\n",
+                 currentLine + 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+        lexeme[0] = *p;
+        lexeme[1] = '\0';
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+            currentLine + 1; // The line number is not 0-indexed
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+            strdup(lexeme);
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+            currentLineCursor - 1;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+            symbolToken;
+        tokensNumberInCurrentLine++;
+        free(lexeme);
+        p++; // To skip the current symbol, since we tokenized it
+        continue;
+      }
+
+      // Now, we will check if it is a symbol, so we will tokenize it directly,
+      // resetting the variable recording and number recording.
+      else if (is_symbol(p) == 1) {
+        TokensTypes symbolToken = symbol_to_token(p);
+        // Ofc the variable recording check is a double check, but it won't hurt
+        // the program nor the performance.
+        if (isRecordingVariable == 1) {
+          if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+            tokensAllocationCapacity *= 2;
+            Token *temp = realloc(lexer->tokens[currentLine],
+                                  tokensAllocationCapacity * sizeof(Token));
+            if (temp == NULL) {
+              printf("Error reallocating new memory for the tokens of the "
+                     "variable name at line %zu!\n",
+                     currentLine + 1);
+              free(lBuffer);
+              lexer_clean(lexer);
+              return NULL;
+            }
+            lexer->tokens[currentLine] = temp;
+          }
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+              currentLine + 1; // Line numbering isn't 0-indexed.
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+              strdup(lBuffer);
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+              currentLineCursor - lLength;
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+              recordingVariableType;
+          tokensNumberInCurrentLine++;
+          isRecordingVariable = 0;
+          recordingVariableType = VARIABLE;
+        }
+
+        // Then we will check if it came after a number:
+        else if (isRecordingNumber == 1) {
+          if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+            tokensAllocationCapacity *= 2;
+            Token *temp = realloc(lexer->tokens[currentLine],
+                                  tokensAllocationCapacity * sizeof(Token));
+            if (temp == NULL) {
+              printf("Error reallocating new memory for the token of the "
+                     "symbol '%c' at line %zu!\n",
+                     *p, currentLine + 1);
+              free(lBuffer);
+              lexer_clean(lexer);
+              return NULL;
+            }
+          }
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+              currentLine + 1; // Lines are not 0-indexed
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+              strdup(lBuffer);
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+              currentLineCursor - lLength;
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+              DATA_NUMBER;
+          tokensNumberInCurrentLine++;
+          isRecordingNumber = 0;
+        }
+
+        // If the lexeme is full, we will tokenize it too:
+        else if (lLength > 0) {
+          if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+            tokensAllocationCapacity *= 2;
+            Token *temp = realloc(lexer->tokens[currentLine],
+                                  tokensAllocationCapacity * sizeof(Token));
+            if (temp == NULL) {
+              printf("Error reallocating new memory for the token of the "
+                     "symbol '%c' at line %zu!\n",
+                     *p, currentLine + 1);
+              free(lBuffer);
+              lexer_clean(lexer);
+              return NULL;
+            }
+          }
+          TokensTypes classifiedToken =
+              classify_token(&lBuffer, &lLength, &isString);
+          if (classifiedToken == UNKNOWN) {
+            printf("Error tokenizing the source code: unknown token \"%s\" at "
+                   "%zu:%zu",
+                   lBuffer, currentLine + 1, currentLineCursor - lLength);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+              currentLine + 1; // not 0-indexed
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+              strdup(lBuffer);
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+              currentLineCursor - lLength;
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+              classifiedToken;
+          tokensNumberInCurrentLine++;
+        }
+
+        // Inserting the symbol into the tokens:
+        char *lexeme = malloc(2 * sizeof(char));
+        if (lexeme == NULL) {
+          printf("Error generating a memory allocation for the lexeme of the "
+                 "symbol after the variable at line %zu!\n",
+                 currentLine + 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+        lexeme[0] = *p;
+        lexeme[1] = '\0';
+        if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+          tokensAllocationCapacity *= 2;
+          Token *temp = realloc(lexer->tokens[currentLine],
+                                tokensAllocationCapacity * sizeof(Token));
+          if (temp == NULL) {
+            printf("Error reallocating new memory for the token of the "
+                   "symbol '%c' at line %zu!\n",
+                   *p, currentLine + 1);
+            free(lBuffer);
+            free(lexeme);
+            lexer_clean(lexer);
+            return NULL;
+          }
+        }
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+            currentLine + 1; // The line number is not 0-indexed
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+            strdup(lexeme);
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+            currentLineCursor - 1;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+            symbolToken;
+        tokensNumberInCurrentLine++;
+        free(lexeme);
+
+        // Resetting lBuffer
+        lLength = 0;
+        lCapacity = initialLCapacity;
+        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
+        if (temp == NULL) {
+          printf("Error resetting the lexeme buffer after reading the symbol "
+                 "token at line %zu!\n",
+                 currentLine + 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+        lBuffer = temp;
+        p++;
+        continue;
       }
 
       // Now, we will check if the buffer starts with a digit so we define a
       // number:
       else if (isdigit(*p) && isRecordingNumber == 0 &&
-               isRecordingVariable == 0) {
+               isRecordingVariable == 0 && lLength == 0) {
         isRecordingNumber = 1;
       }
 
-      // Now, as we are actually recording a number; we will be watching for the
-      // dot:
+      // Now, as we are actually recording a number; we will be watching for
+      // the dot:
       else if (*p == '.' && isRecordingNumber == 1) {
         if (isDotSpotted == 1) {
           printf("Error tokenizing the source code: Cannot use two dots inside "
@@ -433,9 +654,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           isDotSpotted = 1;
       }
 
-      // Now, we will check if we are watching a number value, but not a decimal
-      // point nor a digit is recorded, we will terminate the number and add
-      // it's value to the tokens array:
+      // Now, we will check if we are watching a number value, but not a
+      // decimal point nor a digit is recorded, we will terminate the number
+      // and add it's value to the tokens array:
       else if (isRecordingNumber == 1 && (*p != '.' && isdigit(*p) == 0)) {
         if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
           tokensAllocationCapacity *= 2;
