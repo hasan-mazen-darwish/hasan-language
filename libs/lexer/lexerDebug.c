@@ -41,6 +41,44 @@ static char *getTokenText(TokensTypes type) {
     return "SYMBOL_LEFT_PARENTHESIS";
   case SYMBOL_RIGHT_PARENTHESIS:
     return "SYMBOL_RIGHT_PARENTHESIS";
+  case SYMBOL_MINUS:
+    return "SYMBOL_MINUS";
+  case SYMBOL_NOT:
+    return "SYMBOL_NOT";
+  case SYMBOL_ASTERISK:
+    return "SYMBOL_ASTERISK";
+  case SYMBOL_SLASH:
+    return "SYMBOL_SLASH";
+  case SYMBOL_RIGHT_CURLY_BRACKET:
+    return "SYMBOL_RIGHT_CURLY_BRACKET";
+  case SYMBOL_LEFT_CURLY_BRACKET:
+    return "SYMBOL_RIGHT_CURLY_BRACKET";
+
+    // Multi-symbols operations
+  case OPERATION_IS_EQUALS:
+    return "OPERATION_IS_EQUALS";
+  case OPERATION_ISNT_EQUALS:
+    return "OPERATION_ISNT_EQUALS";
+  case OPERATION_GREATER_THAN:
+    return "OPERATION_GREATER_THAN";
+  case OPERATION_SMALLER_THAN:
+    return "OPERATION_SMALLER_THAN";
+  case OPERATION_GREATER_OR_EQUALS_THAN:
+    return "OPERATION_GREATER_OR_EQUALS_THAN";
+  case OPERATION_SMALLER_OR_EQUALS_THAN:
+    return "OPERATION_SMALLER_OR_EQUALS_THAN";
+  case OPERATION_PLUS_PLUS:
+    return "OPERATION_PLUS_PLUS";
+  case OPERATION_MINUS_MINUS:
+    return "OPERATION_MINUS_MINUS";
+  case OPERATION_MINUS_EQUALS:
+    return "OPERATION_MINUS_EQUALS";
+  case OPERATION_PLUS_EQUALS:
+    return "OPERATION_PLUS_EQUALS";
+  case OPERATION_MULTIPLIES_EQUALS:
+    return "OPERATION_MULTIPLIES_EQUALS";
+  case OPERATION_DIVIDES_EQUALS:
+    return "OPERATION_DIVIDES_EQUALS";
 
   // Keywords
   case KEYWORD_WITH:
@@ -49,6 +87,8 @@ static char *getTokenText(TokensTypes type) {
   // Generals
   case VARIABLE:
     return "VARIABLE";
+  case COMMENT:
+    return "COMMENT";
   case UNKNOWN:
     return "UNKNOWN";
   }
