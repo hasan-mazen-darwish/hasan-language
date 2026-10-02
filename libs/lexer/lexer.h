@@ -1,3 +1,5 @@
+#ifndef _LEXER_H
+#define _LEXER_H
 #include <stdio.h>
 
 typedef enum {
@@ -68,3 +70,4 @@ typedef struct Lexer {
 } Lexer;
 
 Lexer *lexer_tokenify(Lexer *lexer);
+#endif // _LEXER_H
