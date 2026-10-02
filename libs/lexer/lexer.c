@@ -124,9 +124,26 @@ static TokensTypes symbol_to_token(char *character) {
     return SYMBOL_LEFT_CURLY_BRACKET;
   case '}':
     return SYMBOL_RIGHT_CURLY_BRACKET;
+  case '"':
+    return SYMBOL_DOUBLE_QUOTES;
   default:
     return UNKNOWN;
   }
+}
+
+// Returns 0 on failure, 1 on success
+static int reset_lbuffer(char **lBuffer, size_t *lLength, size_t *lCapacity,
+                         size_t *initialLCapacity) {
+  *lLength = 0;
+  *lCapacity = *initialLCapacity;
+  char *temp = realloc(*lBuffer, *lCapacity * sizeof(char));
+  if (temp == NULL) {
+    free(*lBuffer);
+    return 0;
+  }
+  *lBuffer = temp;
+  *lBuffer[0] = '\0';
+  return 1;
 }
 
 Lexer *lexer_tokenify(Lexer *lexer) {
@@ -223,17 +240,13 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         lexer->tokens[previousLine][tokensNumberInCurrentLine].type = COMMENT;
         tokensNumberInCurrentLine++;
 
-        lLength = 0;
-        lCapacity = initialLCapacity;
-        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-        if (temp == NULL) {
+        if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+            0) {
           printf("Error reallocating the buffer in the resetting process in "
                  "the new line logic! (The old lBuffer is being tokenized)\n");
-          free(lBuffer);
           lexer_clean(lexer);
           return NULL;
         }
-        lBuffer = temp;
 
         lexer->tokens[previousLine][tokensNumberInCurrentLine].line =
             previousLine + 1;
@@ -313,17 +326,14 @@ Lexer *lexer_tokenify(Lexer *lexer) {
             classifiedToken;
         tokensNumberInCurrentLine++;
 
-        lLength = 0;
-        lCapacity = initialLCapacity;
-        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-        if (temp == NULL) {
+        if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+            0) {
           printf("Error reallocating the buffer in the resetting process in "
                  "the new line logic! (The old lBuffer is being tokenized)\n");
           free(lBuffer);
           lexer_clean(lexer);
           return NULL;
         }
-        lBuffer = temp;
       }
       isRecordingVariable = 0;
       recordingVariableType = VARIABLE;
@@ -357,18 +367,14 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       lexer->tokens[previousLine][tokensNumberInCurrentLine].type = END_OF_LINE;
 
       // Cleaning the lexeme info after the tokenizing
-      lLength = 0;
-      lCapacity = initialLCapacity;
-      char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-      if (temp == NULL) {
+      if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+          0) {
         printf("Error reallocating the buffer in the resetting process in the "
                "new line logic!\n");
         free(lBuffer);
         lexer_clean(lexer);
         return NULL;
       }
-      lBuffer = temp;
-      lBuffer[0] = '\0';
 
       // Finally, initializing a new Tokens array for the next line (which is
       // now currentLine)
@@ -573,10 +579,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         // processing to check if the variable do exist or not. That's the lexer
         // mission anyways.
 
-        lLength = 0;
-        lCapacity = initialLCapacity;
-        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-        if (temp == NULL) {
+        if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+            0) {
           printf("Error resetting the lexeme buffer after reading the in-line "
                  "token at line %zu!\n",
                  currentLine + 1);
@@ -584,7 +588,6 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           lexer_clean(lexer);
           return NULL;
         }
-        lBuffer = temp;
       }
 
       p++;
@@ -621,6 +624,10 @@ Lexer *lexer_tokenify(Lexer *lexer) {
             p += 2;
             if (classifiedToken == COMMENT) {
               isComment = 1;
+              free(two_tokens_buffer);
+              // TODO: Add here some tokenizing in case lLength was already
+              // greate than 0, because it means that there is a token that's
+              // not being tokenized (no whitespace case)
               continue;
             }
             if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
@@ -785,10 +792,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         free(lexeme);
 
         // Resetting lBuffer
-        lLength = 0;
-        lCapacity = initialLCapacity;
-        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-        if (temp == NULL) {
+        if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+            0) {
           printf("Error resetting the lexeme buffer after reading the symbol "
                  "token at line %zu!\n",
                  currentLine + 1);
@@ -796,7 +801,6 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           lexer_clean(lexer);
           return NULL;
         }
-        lBuffer = temp;
         isRecordingNumber = 0;
         isRecordingVariable = 0;
         p++;
@@ -844,10 +848,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
             recordingVariableType;
         tokensNumberInCurrentLine++;
-        lLength = 0;
-        lCapacity = initialLCapacity;
-        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-        if (temp == NULL) {
+        if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+            0) {
           printf("Error resetting the lexeme buffer after reading the in-line "
                  "token at line %zu!\n",
                  currentLine + 1);
@@ -855,7 +857,6 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           lexer_clean(lexer);
           return NULL;
         }
-        lBuffer = temp;
         isRecordingVariable = 0;
         recordingVariableType = VARIABLE;
 
@@ -958,10 +959,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
             DATA_NUMBER;
         tokensNumberInCurrentLine++;
-        lLength = 0;
-        lCapacity = initialLCapacity;
-        char *temp = realloc(lBuffer, lCapacity * sizeof(char));
-        if (temp == NULL) {
+        if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+            0) {
           printf("Error resetting the lexeme buffer after reading the in-line "
                  "token at line %zu!\n",
                  currentLine + 1);
@@ -969,7 +968,6 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           lexer_clean(lexer);
           return NULL;
         }
-        lBuffer = temp;
         isRecordingNumber = 0;
       }
     }
