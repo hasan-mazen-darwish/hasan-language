@@ -1,4 +1,5 @@
 #include "./lexerDebug.h"
+#include "lexer.h"
 #include <stdio.h>
 
 #define COLORS_LINE_NUMBERING "\033[0;1;4;33m" // Bold, underlined, yellow
@@ -53,6 +54,8 @@ static char *getTokenText(TokensTypes type) {
     return "SYMBOL_RIGHT_CURLY_BRACKET";
   case SYMBOL_LEFT_CURLY_BRACKET:
     return "SYMBOL_RIGHT_CURLY_BRACKET";
+  case SYMBOL_DOUBLE_QUOTES:
+    return "SYMBOL_DOUBLE_QUOTES";
 
     // Multi-symbols operations
   case OPERATION_IS_EQUALS:

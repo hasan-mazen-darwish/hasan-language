@@ -60,6 +60,8 @@ static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
     return OPERATION_DIVIDES_EQUALS;
   else if (strcmp(*lexeme, "//") == 0)
     return COMMENT;
+  else if (strcmp(*lexeme, "\"") == 0)
+    return SYMBOL_DOUBLE_QUOTES;
 
   // For unspecified tokens:
   return UNKNOWN;
@@ -97,7 +99,7 @@ static int is_symbol(char *character) {
   return *character == '=' || *character == '+' || *character == '(' ||
          *character == ')' || *character == '-' || *character == '!' ||
          *character == '*' || *character == '/' || *character == '{' ||
-         *character == '}';
+         *character == '}' || *character == '"';
 }
 
 static TokensTypes symbol_to_token(char *character) {
@@ -385,6 +387,99 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       currentLineCursor = 0;
       p++;
       continue;
+    }
+
+    // Before doing anything, we will do string checking:
+    if (*p == '"') {
+      if (isString == 0) {
+        if (lLength > 0) {
+          if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+            tokensAllocationCapacity *= 2;
+            Token *temp = realloc(lexer->tokens[currentLine],
+                                  tokensAllocationCapacity * sizeof(Token));
+            if (temp == NULL) {
+              printf("Error reallocating memory for tokenizing the token "
+                     "before the text in line %zu!\n",
+                     currentLine + 1);
+              free(lBuffer);
+              lexer_clean(lexer);
+              return NULL;
+            }
+            lexer->tokens[currentLine] = temp;
+          }
+
+          TokensTypes classifiedToken;
+          if (isRecordingVariable) {
+            classifiedToken = recordingVariableType;
+            recordingVariableType = VARIABLE;
+            isRecordingVariable = 0;
+          } else if (isRecordingNumber) {
+            classifiedToken = DATA_NUMBER;
+            isRecordingNumber = 0;
+          } else
+            classifiedToken = classify_token(&lBuffer, &lLength, &isString);
+
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+              currentLine + 1;
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+              strdup(lBuffer);
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+              currentLineCursor - lLength;
+          lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+              classifiedToken;
+          tokensNumberInCurrentLine++;
+
+          if (reset_lbuffer(&lBuffer, &lLength, &lCapacity,
+                            &initialLCapacity) == 0) {
+            printf("Error resetting the current buffer after tokenizing it "
+                   "before the string at line %zu!\n",
+                   currentLine + 1);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+        }
+      }
+
+      else if (isString == 1) {
+        if (tokensNumberInCurrentLine >= tokensAllocationCapacity) {
+          tokensAllocationCapacity *= 2;
+          Token *temp = realloc(lexer->tokens[currentLine],
+                                tokensAllocationCapacity * sizeof(Token));
+          if (temp == NULL) {
+            printf("Error reallocating memory for tokenizing the token "
+                   "of the string in line %zu!\n",
+                   currentLine + 1);
+            free(lBuffer);
+            lexer_clean(lexer);
+            return NULL;
+          }
+          lexer->tokens[currentLine] = temp;
+        }
+
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].line =
+            currentLine + 1;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].lexeme =
+            strdup(lBuffer);
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].start =
+            currentLineCursor - lLength;
+        lexer->tokens[currentLine][tokensNumberInCurrentLine].type =
+            DATA_STRING;
+        tokensNumberInCurrentLine++;
+
+        if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
+            0) {
+          printf("Error resetting the current buffer after tokenizing it "
+                 "before the string at line %zu!\n",
+                 currentLine + 1);
+          free(lBuffer);
+          lexer_clean(lexer);
+          return NULL;
+        }
+      }
+
+      p++;
+      isString = isString == 0 ? 1 : 0;
     }
 
     if (isspace((unsigned char)*p) != 0 && (lLength == 0 || isString == 0) &&
