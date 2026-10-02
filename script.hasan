@@ -3,4 +3,4 @@ number a = 4
 number b = 5
 
 // Printing their sum: (for now it's just the values. We are testing the comments in this language)
-print with 4+5 == 1 // Comment
+print with "hello world" // Comment
