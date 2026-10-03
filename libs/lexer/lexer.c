@@ -146,6 +146,26 @@ static int reset_lbuffer(char **lBuffer, size_t *lLength, size_t *lCapacity,
   return 1;
 }
 
+// Returning 1 on success, and 0 on failure
+static int lexer_add_token(size_t *line, size_t *tokensNumber,
+                           size_t *tokensAllocationCapacity,
+                           Token **tokensArray, Token token) {
+  if (*tokensNumber >= *tokensAllocationCapacity) {
+    *tokensAllocationCapacity *= 2;
+    Token *temp =
+        realloc(*tokensArray, *tokensAllocationCapacity * sizeof(Token));
+    if (temp == NULL)
+      return 0;
+    *tokensArray = temp;
+  }
+  tokensArray[*tokensNumber]->line = *line + 1; // Lines are not 0-indexed.
+  tokensArray[*tokensNumber]->lexeme = strdup(token.lexeme);
+  tokensArray[*tokensNumber]->start = token.start;
+  tokensArray[*tokensNumber]->type = token.type;
+  *tokensNumber += 1;
+  return 1;
+}
+
 Lexer *lexer_tokenify(Lexer *lexer) {
   // Fixing the lexer src to not get into any problem
   lexer->src[lexer->srcLength] = '\0';
