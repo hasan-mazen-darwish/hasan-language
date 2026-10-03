@@ -142,7 +142,7 @@ static int reset_lbuffer(char **lBuffer, size_t *lLength, size_t *lCapacity,
     return 0;
   }
   *lBuffer = temp;
-  *lBuffer[0] = '\0';
+  (*lBuffer)[0] = '\0';
   return 1;
 }
 
@@ -313,8 +313,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
         if (lexer_add_token(
                 &currentLine, &tokensNumberInCurrentLine,
-                &tokensAllocationCapacity, &lexer->tokens[currentLine], lBuffer,
-                currentLineCursor - lLength, classifiedToken) == 0) {
+                &tokensAllocationCapacity, &lexer->tokens[previousLine],
+                lBuffer, currentLineCursor - lLength, classifiedToken) == 0) {
           printf("Failed reallocating memory for the last token of the %zu "
                  "line!\n",
                  previousLine + 1);
@@ -342,7 +342,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
       if (lexer_add_token(&currentLine, &tokensNumberInCurrentLine,
                           &tokensAllocationCapacity,
-                          &lexer->tokens[currentLine], lBuffer,
+                          &lexer->tokens[previousLine], lBuffer,
                           currentLineCursor, END_OF_LINE) == 0) {
         printf("Failed reallocating memory for the END_OF_LINE token in the "
                "%zu line!\n",
@@ -381,7 +381,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
     }
 
     // Before doing anything, we will do string checking:
-    if (*p == '"') {
+    if (*p == '"' && isComment == 0) {
       if (isString == 0) {
         if (lLength > 0) {
           TokensTypes classifiedToken;
