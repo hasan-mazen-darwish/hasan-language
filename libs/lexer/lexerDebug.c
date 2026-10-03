@@ -106,6 +106,7 @@ void lexer_debug_tokens(Lexer *lexer) {
     printf(COLORS_LINE_NUMBERING "%d." COLORS_RESET " ", i);
     TokensTypes type;
     Token *p = lexer->tokens[i];
+    type = (*p).type;
     while (type != END_OF_LINE) {
       if (p == NULL) {
         printf("!!ERROR!! a token at line %d is NULL.\n", i);
