@@ -126,21 +126,26 @@ uint64_t hashmap_hash_function(char *key) {
 }
 
 Hashmap *hashmap_default_value(Hashmap *original) {
-  for (size_t i = 0; i < original->capacity; i++) {
-    if (original->data[i].key != NULL) {
-      free(original->data[i].data);
-      free(original->data[i].key);
+  if (original == NULL)
+    return NULL;
+  if (original->data != NULL) {
+    for (size_t i = 0; i < original->capacity; i++) {
+      if (original->data[i].key != NULL) {
+        free(original->data[i].data);
+        original->data[i].data = NULL;
+        free(original->data[i].key);
+        original->data[i].key = NULL;
+      }
     }
   }
   free(original->data);
-  original->capacity = HASHMAP_INITIAL_CAPACITY;
+  original->data = NULL;
   void *temp = calloc(HASHMAP_INITIAL_CAPACITY, sizeof(HashmapEntry));
-  if (temp == NULL) {
-    free(original);
-    free(original->data);
+  if (temp == NULL)
     return NULL;
-  }
+
   original->data = temp;
+  original->capacity = HASHMAP_INITIAL_CAPACITY;
   original->available_positions = HASHMAP_INITIAL_CAPACITY;
   return original;
 }
