@@ -32,6 +32,10 @@ int hashmap_add_key(
     Hashmap *original, char *key,
     void *value); // Returns 0 for allocating or general failures, 1 for
                   // success, and 2 for existing values.
+Hashmap hashmap_new();
+int hashmap_set_key(Hashmap *original, char *key,
+                    void *value); // Returns 0 for allocating or general
+                                  // failuresa and 1 for success
 void *hashmap_get_value(Hashmap *hashmap, char *key);
 
 #endif // !_HASHMAP_H

@@ -1,5 +1,6 @@
 #include "./hashmap.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -13,8 +14,21 @@
 #define FNV_PRIME_64 0x100000001b3ULL // 240 + 28 + 0xb3 = 1099511628211
 #define FNV_OFFSET_BASIS_64 0xcbf29ce484222325ULL // 14695981039346656037
 
+Hashmap hashmap_new() {
+  Hashmap hashmap;
+  hashmap.capacity = HASHMAP_INITIAL_CAPACITY;
+  hashmap.available_positions = HASHMAP_INITIAL_CAPACITY;
+  HashmapEntry *data = calloc(HASHMAP_INITIAL_CAPACITY, sizeof(HashmapEntry));
+  if (data == NULL)
+    exit(1);
+  hashmap.data = data;
+  return hashmap;
+}
+
 static Hashmap *hashmap_rehash_data(Hashmap *hashmap) {
-  Hashmap copy = *hashmap;
+  Hashmap copy = hashmap_new();
+  copy.available_positions = hashmap->capacity;
+  copy.capacity = hashmap->capacity;
   HashmapEntry *temp = calloc(hashmap->capacity, sizeof(HashmapEntry));
   if (temp == NULL)
     return NULL;
