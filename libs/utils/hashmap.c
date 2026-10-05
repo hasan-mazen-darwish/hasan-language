@@ -225,7 +225,7 @@ int hashmap_set_key(Hashmap *original, char *key, void *value) {
        strcmp(original->data[index].key, key) == 0)) {
     original->data[index].is_occupied = 1;
     original->data[index].data = value;
-    original->data[index].key = key;
+    original->data[index].key = strdup(key);
     original->data[index].hash = hash;
     original->available_positions -= 1;
     return 1;
@@ -239,7 +239,7 @@ int hashmap_set_key(Hashmap *original, char *key, void *value) {
          strcmp(original->data[i].key, key) == 0)) {
       original->data[i].is_occupied = 1;
       original->data[i].data = value;
-      original->data[i].key = key;
+      original->data[i].key = strdup(key);
       original->data[i].hash = hash;
       original->available_positions -= 1;
       return 1;
@@ -252,7 +252,7 @@ int hashmap_set_key(Hashmap *original, char *key, void *value) {
          strcmp(original->data[i].key, key) == 0)) {
       original->data[i].is_occupied = 1;
       original->data[i].data = value;
-      original->data[i].key = key;
+      original->data[i].key = strdup(key);
       original->data[i].hash = hash;
       original->available_positions -= 1;
       return 1;
