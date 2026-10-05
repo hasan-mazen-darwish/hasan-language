@@ -28,10 +28,6 @@ static inline uint64_t hashmap_hash_function(char *key)
 Hashmap *
 hashmap_default_value(Hashmap *original); // A function that initializes the
                                           // hashmap to a proper default value
-int hashmap_add_key(
-    Hashmap *original, char *key,
-    void *value); // Returns 0 for allocating or general failures, 1 for
-                  // success, and 2 for existing values.
 Hashmap hashmap_new();
 int hashmap_set_key(Hashmap *original, char *key,
                     void *value); // Returns 0 for allocating or general

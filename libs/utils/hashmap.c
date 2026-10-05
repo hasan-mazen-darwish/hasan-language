@@ -41,8 +41,10 @@ static Hashmap *hashmap_rehash_data(Hashmap *hashmap) {
           hash & (hashmap->capacity -
                   1); // This is the same as hash % hashmap->capacity since the
                       // capacity is guaranteed to be a power of two
-      if (copy.data[index].is_occupied == 0)
+      if (copy.data[index].is_occupied == 0) {
         copy.data[index] = hashmap->data[i];
+        copy.available_positions -= 1;
+      }
 
       // The bucket is occupied! this means either we hit the same key or we
       // have a collision.
@@ -55,15 +57,17 @@ static Hashmap *hashmap_rehash_data(Hashmap *hashmap) {
           index++;
           if (index >= copy.capacity)
             break;
-          if (copy.data[index].hash == hash ||
-              strcmp(copy.data[index].key, hashmap->data[i].key) == 0) {
+          if (copy.data[index].is_occupied == 1 &&
+              (copy.data[index].hash == hash ||
+               strcmp(copy.data[index].key, hashmap->data[i].key) == 0)) {
             is_occupied = 0;
-            copy.data[index] = hashmap->data[i];
+            copy.data[index].data = hashmap->data[i].data;
             break;
           }
           is_occupied = copy.data[index].is_occupied;
           if (is_occupied == 0) {
             copy.data[index] = hashmap->data[i];
+            copy.available_positions -= 1;
             break;
           }
         }
@@ -80,15 +84,18 @@ static Hashmap *hashmap_rehash_data(Hashmap *hashmap) {
           while (is_occupied == 1) {
             if (index >= copy.capacity)
               break;
-            if (copy.data[index].hash == hash ||
-                strcmp(copy.data[index].key, hashmap->data[i].key) == 0) {
+            if (copy.data[index].is_occupied == 1 &&
+                (copy.data[index].hash == hash ||
+                 strcmp(copy.data[index].key, hashmap->data[i].key) == 0)) {
               is_occupied = 0;
               copy.data[index] = hashmap->data[i];
+              copy.available_positions -= 1;
               break;
             }
             is_occupied = copy.data[index].is_occupied;
             if (is_occupied == 0) {
               copy.data[index] = hashmap->data[i];
+              copy.available_positions -= 1;
               break;
             }
             index++;
@@ -194,48 +201,45 @@ void *hashmap_get_value(Hashmap *hashmap, char *key) {
   return NULL;
 }
 
-int hashmap_add_key(Hashmap *original, char *key, void *value) {
+int hashmap_set_key(Hashmap *original, char *key, void *value) {
   // Returning values:
   // 0 for allocating failures or just failures
   // 1 for success
-  // 2 for existing values
 
   // Expanding the hashmap if we already know that the size cap got hit (though
   // rare):
-  if (UNLIKELY(original->available_positions == 0)) {
+  if (original->available_positions == 0) {
     if (hashmap_expand_capacity(original) == NULL) {
       hashmap_clean_hashmap(original);
       return 0;
     }
   }
 
-  // Now, we will start with hashing the key, looking for it if it exists, and
-  // add it to the hash map.
-  if (hashmap_get_value(original, key) != NULL)
-    return 2;
-
   uint64_t hash = hashmap_hash_function(key);
   size_t index = hash & (original->capacity - 1);
 
-  // If this index is not occupied, perfect.
-  if (original->data[index].is_occupied == 0) {
+  // If this index is not occupied or has the same key, perfect.
+  if (original->data[index].is_occupied == 0 ||
+      (original->data[index].is_occupied == 1 &&
+       original->data[index].hash == hash &&
+       strcmp(original->data[index].key, key) == 0)) {
     original->data[index].is_occupied = 1;
     original->data[index].data = value;
-    original->data[index].key = strdup(key);
+    original->data[index].key = key;
     original->data[index].hash = hash;
     original->available_positions -= 1;
     return 1;
   }
 
-  // Otherwise, we will start looping through the array. Of course, if the array
-  // is already full and out of capacity, we will instantly increase it's
-  // capacity.
+  // Otherwise, we will start looping through the array.
 
   for (size_t i = index + 1; i < original->capacity; i++) {
-    if (original->data[i].is_occupied == 0) {
+    if (original->data[i].is_occupied == 0 ||
+        (original->data[i].is_occupied == 1 && original->data[i].hash == hash &&
+         strcmp(original->data[i].key, key) == 0)) {
       original->data[i].is_occupied = 1;
       original->data[i].data = value;
-      original->data[i].key = strdup(key);
+      original->data[i].key = key;
       original->data[i].hash = hash;
       original->available_positions -= 1;
       return 1;
@@ -243,10 +247,12 @@ int hashmap_add_key(Hashmap *original, char *key, void *value) {
   }
 
   for (size_t i = 0; i < index; i++) {
-    if (original->data[i].is_occupied == 0) {
+    if (original->data[i].is_occupied == 0 ||
+        (original->data[i].is_occupied == 1 && original->data[i].hash == hash &&
+         strcmp(original->data[i].key, key) == 0)) {
       original->data[i].is_occupied = 1;
       original->data[i].data = value;
-      original->data[i].key = strdup(key);
+      original->data[i].key = key;
       original->data[i].hash = hash;
       original->available_positions -= 1;
       return 1;
