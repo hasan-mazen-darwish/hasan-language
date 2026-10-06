@@ -1,70 +1,71 @@
 #include "./lexer.h"
+#include "../utils/hashmap.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+int isHashmapInitialized = 0;
+Hashmap keywords;
+
+static int
+add_keyword(char *key,
+            TokensTypes tokenType) { // Returning 1 on success and 0 on failure
+  TokensTypes *boxedToken = malloc(sizeof(TokensTypes));
+  if (boxedToken == NULL) {
+    printf("Error adding keyword \"%s\"!\n", key);
+    return 0;
+  }
+  boxedToken[0] = tokenType;
+  return hashmap_set_key(&keywords, key, boxedToken);
+};
+
 static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
                                   int *isString) {
-  if (*isString == 1)
-    return VARIABLE_STRING;
-  else if (strcmp(*lexeme, "print") == 0)
-    return FUNCTION_PRINT;
-  else if (strcmp(*lexeme, "(") == 0)
-    return SYMBOL_LEFT_PARENTHESIS;
-  else if (strcmp(*lexeme, ")") == 0)
-    return SYMBOL_RIGHT_PARENTHESIS;
-  else if (strcmp(*lexeme, "=") == 0)
-    return SYMBOL_EQUALS;
-  else if (strcmp(*lexeme, "+") == 0)
-    return SYMBOL_PLUS;
-  else if (strcmp(*lexeme, "with") == 0)
-    return KEYWORD_WITH;
-  else if (strcmp(*lexeme, "number") == 0)
-    return VARIABLE_NUMBER_KEYWORD;
-  else if (strcmp(*lexeme, "{") == 0)
-    return SYMBOL_LEFT_CURLY_BRACKET;
-  else if (strcmp(*lexeme, "}") == 0)
-    return SYMBOL_RIGHT_CURLY_BRACKET;
-  else if (strcmp(*lexeme, "!") == 0)
-    return SYMBOL_NOT;
-  else if (strcmp(*lexeme, "*") == 0)
-    return SYMBOL_ASTERISK;
-  else if (strcmp(*lexeme, "/") == 0)
-    return SYMBOL_SLASH;
-  else if (strcmp(*lexeme, "==") == 0)
-    return OPERATION_IS_EQUALS;
-  else if (strcmp(*lexeme, "!=") == 0)
-    return OPERATION_ISNT_EQUALS;
-  else if (strcmp(*lexeme, ">") == 0)
-    return OPERATION_GREATER_THAN;
-  else if (strcmp(*lexeme, ">=") == 0)
-    return OPERATION_GREATER_OR_EQUALS_THAN;
-  else if (strcmp(*lexeme, "<") == 0)
-    return OPERATION_SMALLER_THAN;
-  else if (strcmp(*lexeme, "<=") == 0)
-    return OPERATION_SMALLER_OR_EQUALS_THAN;
-  else if (strcmp(*lexeme, "++") == 0)
-    return OPERATION_PLUS_PLUS;
-  else if (strcmp(*lexeme, "+=") == 0)
-    return OPERATION_PLUS_EQUALS;
-  else if (strcmp(*lexeme, "--") == 0)
-    return OPERATION_MINUS_MINUS;
-  else if (strcmp(*lexeme, "-=") == 0)
-    return OPERATION_MINUS_EQUALS;
-  else if (strcmp(*lexeme, "-") == 0)
-    return SYMBOL_MINUS;
-  else if (strcmp(*lexeme, "*=") == 0)
-    return OPERATION_MULTIPLIES_EQUALS;
-  else if (strcmp(*lexeme, "/=") == 0)
-    return OPERATION_DIVIDES_EQUALS;
-  else if (strcmp(*lexeme, "//") == 0)
-    return COMMENT;
-  else if (strcmp(*lexeme, "\"") == 0)
-    return SYMBOL_DOUBLE_QUOTES;
+  int returnsOfAddingKeywords = 0; // This will be greater than 0 if any keyword
+                                   // wasn't added successfully.
+  if (isHashmapInitialized == 0) {
+    keywords = hashmap_new();
+    returnsOfAddingKeywords += add_keyword("print", FUNCTION_PRINT);
+    returnsOfAddingKeywords += add_keyword("(", SYMBOL_LEFT_PARENTHESIS);
+    returnsOfAddingKeywords += add_keyword(")", SYMBOL_RIGHT_PARENTHESIS);
+    returnsOfAddingKeywords += add_keyword("=", SYMBOL_EQUALS);
+    returnsOfAddingKeywords += add_keyword("+", SYMBOL_PLUS);
+    returnsOfAddingKeywords += add_keyword("-", SYMBOL_MINUS);
+    returnsOfAddingKeywords += add_keyword("*", SYMBOL_ASTERISK);
+    returnsOfAddingKeywords += add_keyword("/", SYMBOL_SLASH);
+    returnsOfAddingKeywords += add_keyword("{", SYMBOL_LEFT_CURLY_BRACKET);
+    returnsOfAddingKeywords += add_keyword("}", SYMBOL_RIGHT_CURLY_BRACKET);
+    returnsOfAddingKeywords += add_keyword("!", SYMBOL_NOT);
+    returnsOfAddingKeywords += add_keyword("\"", SYMBOL_DOUBLE_QUOTES);
+    returnsOfAddingKeywords += add_keyword("//", COMMENT);
+    returnsOfAddingKeywords += add_keyword("==", OPERATION_IS_EQUALS);
+    returnsOfAddingKeywords += add_keyword("!=", OPERATION_ISNT_EQUALS);
+    returnsOfAddingKeywords +=
+        add_keyword(">=", OPERATION_GREATER_OR_EQUALS_THAN);
+    returnsOfAddingKeywords +=
+        add_keyword("<=", OPERATION_SMALLER_OR_EQUALS_THAN);
+    returnsOfAddingKeywords += add_keyword("+=", OPERATION_PLUS_EQUALS);
+    returnsOfAddingKeywords += add_keyword("-=", OPERATION_MINUS_EQUALS);
+    returnsOfAddingKeywords += add_keyword("*=", OPERATION_MULTIPLIES_EQUALS);
+    returnsOfAddingKeywords += add_keyword("/=", OPERATION_DIVIDES_EQUALS);
+    returnsOfAddingKeywords += add_keyword(">", OPERATION_GREATER_THAN);
+    returnsOfAddingKeywords += add_keyword("<", OPERATION_SMALLER_THAN);
+    returnsOfAddingKeywords += add_keyword("++", OPERATION_PLUS_PLUS);
+    returnsOfAddingKeywords += add_keyword("--", OPERATION_MINUS_MINUS);
+    returnsOfAddingKeywords += add_keyword("number", VARIABLE_NUMBER_KEYWORD);
+    returnsOfAddingKeywords += add_keyword("with", KEYWORD_WITH);
+    if (returnsOfAddingKeywords > 0) {
+      return UNKNOWN;
+    }
+    isHashmapInitialized = 1;
+  }
 
+  TokensTypes *tokenType = hashmap_get_value(&keywords, *lexeme);
   // For unspecified tokens:
-  return UNKNOWN;
+  if (tokenType == NULL)
+    return UNKNOWN;
+  return *tokenType;
 }
 
 void lexer_clean(Lexer *lexer) {
@@ -74,6 +75,7 @@ void lexer_clean(Lexer *lexer) {
   }
   free(lexer->tokens);
   free(lexer->src);
+  hashmap_clean_hashmap(&keywords);
 
   // Unnecessary. Just nice-to-haves
   lexer->srcLength = 0;
