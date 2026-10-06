@@ -613,9 +613,33 @@ Lexer *lexer_tokenify(Lexer *lexer) {
             if (classifiedToken == COMMENT) {
               isComment = 1;
               free(two_tokens_buffer);
-              // TODO: Add here some tokenizing in case lLength was already
-              // greate than 0, because it means that there is a token that's
-              // not being tokenized (no whitespace case)
+              if (lLength > 0) {
+                TokensTypes tokenBeforeComment =
+                    classify_token(&lBuffer, &lLength, &isString);
+                if (tokenBeforeComment == UNKNOWN) {
+                  printf(
+                      "Error tokenizing the sorce code: Unknown token \"%s\" "
+                      "at %zu:%zu.\n",
+                      lBuffer, currentLine + 1, currentLineCursor - lLength);
+                  free(lBuffer);
+                  lexer_clean(lexer);
+                  return NULL;
+                }
+                if (lexer_add_token(&currentLine, &tokensNumberInCurrentLine,
+                                    &tokensAllocationCapacity,
+                                    &lexer->tokens[currentLine], lBuffer,
+                                    currentLineCursor - lLength,
+                                    tokenBeforeComment) == 0) {
+                  printf("Error reallocating memory for the token before the "
+                         "comment in line %zu!\n",
+                         currentLine + 1);
+                  free(lBuffer);
+                  lexer_clean(lexer);
+                  return NULL;
+                }
+                reset_lbuffer(&lBuffer, &lLength, &lCapacity,
+                              &initialLCapacity);
+              }
               continue;
             }
 
