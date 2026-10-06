@@ -293,6 +293,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         } else if (isRecordingNumber == 1) {
           classifiedToken = DATA_NUMBER;
           isRecordingNumber = 0;
+          isDotSpotted = 0;
         } else {
           classifiedToken = classify_token(&lBuffer, &lLength, &isString);
         }
@@ -387,6 +388,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           } else if (isRecordingNumber) {
             classifiedToken = DATA_NUMBER;
             isRecordingNumber = 0;
+            isDotSpotted = 0;
           } else
             classifiedToken = classify_token(&lBuffer, &lLength, &isString);
 
@@ -461,6 +463,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         else if (isRecordingNumber == 1) {
           classifiedToken = DATA_NUMBER;
           isRecordingNumber = 0;
+          isDotSpotted = 0;
         }
 
         else {
@@ -627,8 +630,10 @@ Lexer *lexer_tokenify(Lexer *lexer) {
               lexer_clean(lexer);
               return NULL;
             }
+            free(two_tokens_buffer);
             continue;
           }
+          free(two_tokens_buffer);
         }
 
         TokensTypes symbolToken = symbol_to_token(p);
@@ -665,6 +670,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
             return NULL;
           }
           isRecordingNumber = 0;
+          isDotSpotted = 0;
         }
 
         // If the lexeme is full, we will tokenize it too:
@@ -729,6 +735,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           return NULL;
         }
         isRecordingNumber = 0;
+        isDotSpotted = 0;
         isRecordingVariable = 0;
         p++;
         continue;
@@ -859,6 +866,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           return NULL;
         }
         isRecordingNumber = 0;
+        isDotSpotted = 0;
       }
     }
 
