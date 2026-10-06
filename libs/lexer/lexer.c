@@ -22,46 +22,39 @@ add_keyword(char *key,
 
 static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
                                   int *isString) {
-  int returnsOfAddingKeywords = 0; // This will be greater than 0 if any keyword
-                                   // wasn't added successfully.
   if (isHashmapInitialized == 0) {
     keywords = hashmap_new();
-    returnsOfAddingKeywords += add_keyword("print", FUNCTION_PRINT);
-    returnsOfAddingKeywords += add_keyword("(", SYMBOL_LEFT_PARENTHESIS);
-    returnsOfAddingKeywords += add_keyword(")", SYMBOL_RIGHT_PARENTHESIS);
-    returnsOfAddingKeywords += add_keyword("=", SYMBOL_EQUALS);
-    returnsOfAddingKeywords += add_keyword("+", SYMBOL_PLUS);
-    returnsOfAddingKeywords += add_keyword("-", SYMBOL_MINUS);
-    returnsOfAddingKeywords += add_keyword("*", SYMBOL_ASTERISK);
-    returnsOfAddingKeywords += add_keyword("/", SYMBOL_SLASH);
-    returnsOfAddingKeywords += add_keyword("{", SYMBOL_LEFT_CURLY_BRACKET);
-    returnsOfAddingKeywords += add_keyword("}", SYMBOL_RIGHT_CURLY_BRACKET);
-    returnsOfAddingKeywords += add_keyword("!", SYMBOL_NOT);
-    returnsOfAddingKeywords += add_keyword("\"", SYMBOL_DOUBLE_QUOTES);
-    returnsOfAddingKeywords += add_keyword("//", COMMENT);
-    returnsOfAddingKeywords += add_keyword("==", OPERATION_IS_EQUALS);
-    returnsOfAddingKeywords += add_keyword("!=", OPERATION_ISNT_EQUALS);
-    returnsOfAddingKeywords +=
-        add_keyword(">=", OPERATION_GREATER_OR_EQUALS_THAN);
-    returnsOfAddingKeywords +=
-        add_keyword("<=", OPERATION_SMALLER_OR_EQUALS_THAN);
-    returnsOfAddingKeywords += add_keyword("+=", OPERATION_PLUS_EQUALS);
-    returnsOfAddingKeywords += add_keyword("-=", OPERATION_MINUS_EQUALS);
-    returnsOfAddingKeywords += add_keyword("*=", OPERATION_MULTIPLIES_EQUALS);
-    returnsOfAddingKeywords += add_keyword("/=", OPERATION_DIVIDES_EQUALS);
-    returnsOfAddingKeywords += add_keyword(">", OPERATION_GREATER_THAN);
-    returnsOfAddingKeywords += add_keyword("<", OPERATION_SMALLER_THAN);
-    returnsOfAddingKeywords += add_keyword("++", OPERATION_PLUS_PLUS);
-    returnsOfAddingKeywords += add_keyword("--", OPERATION_MINUS_MINUS);
-    returnsOfAddingKeywords += add_keyword("number", VARIABLE_NUMBER_KEYWORD);
-    returnsOfAddingKeywords += add_keyword("with", KEYWORD_WITH);
-    if (returnsOfAddingKeywords > 0) {
-      return UNKNOWN;
-    }
+    add_keyword("print", FUNCTION_PRINT);
+    add_keyword("(", SYMBOL_LEFT_PARENTHESIS);
+    add_keyword(")", SYMBOL_RIGHT_PARENTHESIS);
+    add_keyword("=", SYMBOL_EQUALS);
+    add_keyword("+", SYMBOL_PLUS);
+    add_keyword("-", SYMBOL_MINUS);
+    add_keyword("*", SYMBOL_ASTERISK);
+    add_keyword("/", SYMBOL_SLASH);
+    add_keyword("{", SYMBOL_LEFT_CURLY_BRACKET);
+    add_keyword("}", SYMBOL_RIGHT_CURLY_BRACKET);
+    add_keyword("!", SYMBOL_NOT);
+    add_keyword("\"", SYMBOL_DOUBLE_QUOTES);
+    add_keyword("//", COMMENT);
+    add_keyword("==", OPERATION_IS_EQUALS);
+    add_keyword("!=", OPERATION_ISNT_EQUALS);
+    add_keyword(">=", OPERATION_GREATER_OR_EQUALS_THAN);
+    add_keyword("<=", OPERATION_SMALLER_OR_EQUALS_THAN);
+    add_keyword("+=", OPERATION_PLUS_EQUALS);
+    add_keyword("-=", OPERATION_MINUS_EQUALS);
+    add_keyword("*=", OPERATION_MULTIPLIES_EQUALS);
+    add_keyword("/=", OPERATION_DIVIDES_EQUALS);
+    add_keyword(">", OPERATION_GREATER_THAN);
+    add_keyword("<", OPERATION_SMALLER_THAN);
+    add_keyword("++", OPERATION_PLUS_PLUS);
+    add_keyword("--", OPERATION_MINUS_MINUS);
+    add_keyword("number", VARIABLE_NUMBER_KEYWORD);
+    add_keyword("with", KEYWORD_WITH);
     isHashmapInitialized = 1;
   }
 
-  TokensTypes *tokenType = hashmap_get_value(&keywords, *lexeme);
+  TokensTypes *tokenType = (TokensTypes *)hashmap_get_value(&keywords, *lexeme);
   // For unspecified tokens:
   if (tokenType == NULL)
     return UNKNOWN;
