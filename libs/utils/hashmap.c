@@ -132,7 +132,6 @@ void hashmap_clean_hashmap(Hashmap *hashmap) {
     }
   }
   free(hashmap->data);
-  free(hashmap);
 }
 
 uint64_t hashmap_hash_function(char *key) {

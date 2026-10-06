@@ -904,5 +904,6 @@ Lexer *lexer_tokenify(Lexer *lexer) {
     lexer_clean(lexer);
     return NULL;
   }
+  hashmap_clean_hashmap(&keywords);
   return lexer;
 }

@@ -1,5 +1,5 @@
 // Defining two numbers:
-number a = 4
+number a1 = 4
 number b = 5
 
 // Printing their sum: (for now it's just the values. We are testing the comments in this language)
