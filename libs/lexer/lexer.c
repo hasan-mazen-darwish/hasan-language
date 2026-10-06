@@ -535,6 +535,50 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       continue;
     }
 
+    // We will check if there is a string, so we can watch for the \ escape
+    // character
+    if (isString == 1 && *p == '\\') {
+      p++;
+      switch (*p) {
+      case 'n':
+        *p = '\n';
+        break;
+      case 'r':
+        *p = '\r';
+        break;
+      case 't':
+        *p = '\t';
+        break;
+      case 'v':
+        *p = '\v';
+        break;
+      case 'b':
+        *p = '\b';
+        break;
+      case 'f':
+        *p = '\f';
+        break;
+      case 'a':
+        *p = '\a';
+        break;
+      case '\\':
+        *p = '\\';
+        break;
+      case '\'':
+        *p = '\'';
+        break;
+      case '"':
+        *p = '"';
+        break;
+      case '?':
+        *p = '?';
+        break;
+      default:
+        p--;
+        break;
+      }
+    }
+
     // Now, no whitespace detected, but before writing into the buffer, we need
     // to check if the buffer previously is a string or a comment or not, if
     // not, we will check it.
