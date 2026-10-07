@@ -6,7 +6,14 @@
 #include <string.h>
 
 int isHashmapInitialized = 0;
+int isVariablesHashmapInitialized = 0;
 Hashmap keywords;
+Hashmap variables;
+
+typedef struct Variable {
+  char *name;
+  TokensTypes type;
+} Variable;
 
 static int
 add_keyword(char *key,
@@ -19,6 +26,19 @@ add_keyword(char *key,
   boxedToken[0] = tokenType;
   return hashmap_set_key(&keywords, key, boxedToken);
 };
+
+static int
+add_variable(char *name,
+             TokensTypes type) { // Returning 1 on success and 0 on failure
+  Variable *boxedToken = malloc(sizeof(Variable));
+  if (boxedToken == NULL) {
+    printf("Error adding variable named \"%s\"!\n", name);
+    return 0;
+  }
+  Variable var = {name, type};
+  boxedToken[0] = var;
+  return hashmap_set_key(&variables, name, boxedToken);
+}
 
 static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
                                   int *isString) {
@@ -53,11 +73,19 @@ static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
     add_keyword("with", KEYWORD_WITH);
     isHashmapInitialized = 1;
   }
+  if (isVariablesHashmapInitialized == 0) {
+    variables = hashmap_new();
+    isVariablesHashmapInitialized = 1;
+  }
 
+  Variable *variable = (Variable *)hashmap_get_value(&variables, *lexeme);
   TokensTypes *tokenType = (TokensTypes *)hashmap_get_value(&keywords, *lexeme);
   // For unspecified tokens:
-  if (tokenType == NULL)
-    return UNKNOWN;
+  if (tokenType == NULL) {
+    if (variable == NULL)
+      return UNKNOWN;
+    return variable->type;
+  }
   return *tokenType;
 }
 
@@ -165,6 +193,9 @@ static int lexer_add_token(size_t *line, size_t *tokensNumber,
 Lexer *lexer_tokenify(Lexer *lexer) {
   // Fixing the lexer src to not get into any problem
   lexer->src[lexer->srcLength] = '\0';
+  if (isVariablesHashmapInitialized == 0) {
+    variables = hashmap_new();
+  }
 
   size_t lLength = 0; // A shortcut for lexemeLength
   size_t initialLCapacity = 100;
@@ -287,6 +318,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       if (lLength > 0) {
         TokensTypes classifiedToken;
         if (isRecordingVariable == 1) {
+          add_variable(lBuffer, recordingVariableType);
           classifiedToken = recordingVariableType;
           recordingVariableType = VARIABLE;
           isRecordingVariable = 0;
@@ -454,6 +486,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         TokensTypes classifiedToken;
         // We check if there is a variable being recorded first:
         if (isRecordingVariable == 1) {
+          add_variable(lBuffer, recordingVariableType);
           classifiedToken = recordingVariableType;
           recordingVariableType = VARIABLE;
           isRecordingVariable = 0;
@@ -677,6 +710,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
             return NULL;
           }
           isRecordingVariable = 0;
+          add_variable(lBuffer, recordingVariableType);
           recordingVariableType = VARIABLE;
         }
 
@@ -793,6 +827,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           lexer_clean(lexer);
           return NULL;
         }
+        add_variable(lBuffer, recordingVariableType);
 
         if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
             0) {
