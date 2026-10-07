@@ -125,13 +125,19 @@ static Hashmap *hashmap_expand_capacity(Hashmap *original) {
 }
 
 void hashmap_clean_hashmap(Hashmap *hashmap) {
-  for (size_t i = 0; i < hashmap->capacity; i++) {
-    if (hashmap->data[i].key != NULL) {
-      free(hashmap->data[i].data);
-      free(hashmap->data[i].key);
+  if (hashmap == NULL)
+    return;
+  if (hashmap->data != NULL)
+    for (size_t i = 0; i < hashmap->capacity; i++) {
+      if (hashmap->data[i].key != NULL) {
+        free(hashmap->data[i].data);
+        hashmap->data[i].data = NULL;
+        free(hashmap->data[i].key);
+        hashmap->data[i].key = NULL;
+      }
     }
-  }
   free(hashmap->data);
+  hashmap->data = NULL;
 }
 
 uint64_t hashmap_hash_function(char *key) {
