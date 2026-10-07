@@ -71,4 +71,5 @@ typedef struct Lexer {
 } Lexer;
 
 Lexer *lexer_tokenify(Lexer *lexer);
+void lexer_clean(Lexer *lexer);
 #endif // _LEXER_H

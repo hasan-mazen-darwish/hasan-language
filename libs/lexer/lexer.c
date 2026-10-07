@@ -90,6 +90,8 @@ static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
 }
 
 void lexer_clean(Lexer *lexer) {
+  if (lexer == NULL)
+    return;
   for (size_t i = 0; i < lexer->lines; i++) {
     free(lexer->tokens[i]->lexeme);
     free(lexer->tokens[i]);
