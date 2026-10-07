@@ -103,7 +103,7 @@ void lexer_debug_tokens(Lexer *lexer) {
       printf("!!ERROR!! lexer->tokens[%d] is NULL.\n", i);
       break;
     }
-    printf(COLORS_LINE_NUMBERING "%d." COLORS_RESET " ", i);
+    printf(COLORS_LINE_NUMBERING "%d." COLORS_RESET " ", i + 1);
     TokensTypes type;
     Token *p = lexer->tokens[i];
     type = (*p).type;
