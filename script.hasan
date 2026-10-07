@@ -1,6 +1,6 @@
 // Defining two numbers:
-number a1 = 4
-number b = 5
+number a1 = 4.2
+number b = 5.01
 
-// Printing their sum: (for now it's just the values. We are testing the comments in this language)
-print with "Someone once said: \n\"There gotta be wisdom somewhere\"" // Comment
+// Printing the sum of the two variables:
+print with a1 + b
