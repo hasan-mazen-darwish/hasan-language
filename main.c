@@ -1,4 +1,5 @@
 #include "./libs/lexer/lexerLibs.h"
+#include "libs/lexer/lexer.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -129,6 +130,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
   lexer_debug_tokens(&lexer);
+  lexer_clean(&lexer);
 
   return 0;
 }
