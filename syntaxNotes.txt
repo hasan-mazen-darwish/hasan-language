@@ -1,0 +1,33 @@
+Function call:
+
+print with <argument1> and <argument2> and <argument3>
+------------------------------
+
+Function definition:
+
+<data type> <function name> given <data type> <argument1> and ... {
+    <function body>
+    gimme <value of data type>
+}
+------------------------------
+
+if/else statements:
+
+if <expression> {
+    ...
+} else if <expression> {
+    ...
+} ... else {
+    ...
+}
+------------------------------
+
+switch statements:
+
+switch <expression> {
+    case <expression> {}
+    case <expression> {}
+    ...
+    default {}
+}
+------------------------------
