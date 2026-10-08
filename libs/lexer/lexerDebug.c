@@ -82,10 +82,30 @@ static char *getTokenText(TokensTypes type) {
     return "OPERATION_MULTIPLIES_EQUALS";
   case OPERATION_DIVIDES_EQUALS:
     return "OPERATION_DIVIDES_EQUALS";
+  case OPERATION_AND:
+    return "OPERATION_AND";
+  case OPERATION_BITWISE_AND:
+    return "OPERATION_BITWISE_AND";
+  case OPERATION_OR:
+    return "OPERATION_OR";
+  case OPERATION_BITWISE_OR:
+    return "OPERATION_BITWISE_OR";
 
   // Keywords
   case KEYWORD_WITH:
     return "KEYWORD_WITH";
+  case KEYWORD_AND:
+    return "KEYWORD_AND";
+  case KEYWORD_IF:
+    return "KEYWORD_IF";
+  case KEYWORD_ELSE:
+    return "KEYWORD_ELSE";
+  case KEYWORD_SWITCH:
+    return "KEYWORD_SWITCH";
+  case KEYWORD_CASE:
+    return "KEYWORD_CASE";
+  case KEYWORD_DEFAULT:
+    return "KEYWORD_DEFAULT";
 
   // Generals
   case VARIABLE:

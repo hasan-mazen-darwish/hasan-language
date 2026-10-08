@@ -69,8 +69,16 @@ static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
     add_keyword("<", OPERATION_SMALLER_THAN);
     add_keyword("++", OPERATION_PLUS_PLUS);
     add_keyword("--", OPERATION_MINUS_MINUS);
+    add_keyword("&&", OPERATION_AND);
+    add_keyword("||", OPERATION_OR);
     add_keyword("number", VARIABLE_NUMBER_KEYWORD);
     add_keyword("with", KEYWORD_WITH);
+    add_keyword("and", KEYWORD_AND);
+    add_keyword("if", KEYWORD_IF);
+    add_keyword("else", KEYWORD_ELSE);
+    add_keyword("switch", KEYWORD_SWITCH);
+    add_keyword("case", KEYWORD_CASE);
+    add_keyword("default", KEYWORD_DEFAULT);
     isHashmapInitialized = 1;
   }
   if (isVariablesHashmapInitialized == 0) {
@@ -124,7 +132,8 @@ static int is_symbol(char *character) {
   return *character == '=' || *character == '+' || *character == '(' ||
          *character == ')' || *character == '-' || *character == '!' ||
          *character == '*' || *character == '/' || *character == '{' ||
-         *character == '}' || *character == '"';
+         *character == '}' || *character == '"' || *character == '&' ||
+         *character == '|';
 }
 
 static TokensTypes symbol_to_token(char *character) {
@@ -151,6 +160,10 @@ static TokensTypes symbol_to_token(char *character) {
     return SYMBOL_RIGHT_CURLY_BRACKET;
   case '"':
     return SYMBOL_DOUBLE_QUOTES;
+  case '&':
+    return OPERATION_BITWISE_AND;
+  case '|':
+    return OPERATION_BITWISE_OR;
   default:
     return UNKNOWN;
   }
