@@ -18,6 +18,10 @@ static char *getTokenText(TokensTypes type) {
     return "VARIABLE_STRING";
   case VARIABLE_STRING_KEYWORD:
     return "VARIABLE_STRING_KEYWORD";
+  case VARIABLE_BOOLEAN:
+    return "VARIABLE_BOOLEAN";
+  case VARIABLE_BOOLEAN_KEYWORD:
+    return "VARIABLE_BOOLEAN_KEYWORD";
 
   // Data Types
   case DATA_NUMBER:
@@ -106,6 +110,10 @@ static char *getTokenText(TokensTypes type) {
     return "KEYWORD_CASE";
   case KEYWORD_DEFAULT:
     return "KEYWORD_DEFAULT";
+  case KEYWORD_TRUE:
+    return "KEYWORD_TRUE";
+  case KEYWORD_FALSE:
+    return "KEYWORD_FALSE";
 
   // Generals
   case VARIABLE:

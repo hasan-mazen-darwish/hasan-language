@@ -79,6 +79,10 @@ static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
     add_keyword("switch", KEYWORD_SWITCH);
     add_keyword("case", KEYWORD_CASE);
     add_keyword("default", KEYWORD_DEFAULT);
+    add_keyword("string", VARIABLE_STRING_KEYWORD);
+    add_keyword("truth", VARIABLE_BOOLEAN_KEYWORD);
+    add_keyword("true", KEYWORD_TRUE);
+    add_keyword("false", KEYWORD_FALSE);
     isHashmapInitialized = 1;
   }
   if (isVariablesHashmapInitialized == 0) {
@@ -564,12 +568,13 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         if (classifiedToken == VARIABLE_NUMBER_KEYWORD) {
           isRecordingVariable = 1;
           recordingVariableType = VARIABLE_NUMBER;
+        } else if (classifiedToken == VARIABLE_STRING_KEYWORD) {
+          isRecordingVariable = 1;
+          recordingVariableType = VARIABLE_STRING;
+        } else if (classifiedToken == VARIABLE_BOOLEAN_KEYWORD) {
+          isRecordingVariable = 1;
+          recordingVariableType = VARIABLE_BOOLEAN;
         }
-
-        // TODO: Add a hash table for the variables, and attach them to the
-        // lexer, so the parser, AST, and interpreter won't do additional
-        // processing to check if the variable do exist or not. That's the lexer
-        // mission anyways.
 
         if (reset_lbuffer(&lBuffer, &lLength, &lCapacity, &initialLCapacity) ==
             0) {
