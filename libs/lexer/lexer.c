@@ -108,17 +108,26 @@ void lexer_clean(Lexer *lexer) {
     free(lexer->tokens[i]->lexeme);
     free(lexer->tokens[i]);
   }
-  free(lexer->tokens);
-  free(lexer->src);
+  if (lexer->tokens != NULL) {
+    free(lexer->tokens);
+    lexer->tokens = NULL;
+  }
+  if (lexer->src != NULL) {
+    free(lexer->src);
+    lexer->src = NULL;
+  }
   hashmap_clean_hashmap(&keywords);
+  hashmap_clean_hashmap(&variables);
 
   // Unnecessary. Just nice-to-haves
   lexer->srcLength = 0;
   lexer->lines = 0;
+  return;
 }
 
-// This function will check if the character given can be inside a variable name
-// or cannot. For example, _ can be found inside a variable, but ; cannot.
+// This function will check if the character given can be inside a variable
+// name or cannot. For example, _ can be found inside a variable, but ;
+// cannot.
 static int is_variable_character_valid(char *character) {
   if (isalpha(*character))
     return 1;
@@ -218,8 +227,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
   size_t lLength = 0; // A shortcut for lexemeLength
   size_t initialLCapacity = 100;
-  size_t lCapacity =
-      initialLCapacity; // For detecting the allocation capacity of the lBuffer.
+  size_t lCapacity = initialLCapacity; // For detecting the allocation
+                                       // capacity of the lBuffer.
   char *lBuffer =
       malloc(lCapacity * sizeof(char)); // A shortcut for lexemeBuffer
 
@@ -230,8 +239,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
   int isComment = 0;
   int isRecordingVariable = 0; // Checks if the recording token is going to be
                                // labeled VARIABLE_something.
-  int isRecordingNumber = 0; // Checking if we are recording a number, so we can
-                             // tokenize it into DATA_NUMBER.
+  int isRecordingNumber = 0;   // Checking if we are recording a number, so we
+                               // can tokenize it into DATA_NUMBER.
   int isDotSpotted =
       0; // This is for checking cases like 1.2.1 where it is invalid
   TokensTypes recordingVariableType = VARIABLE;
@@ -313,8 +322,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           return NULL;
         }
 
-        // Finally, initializing a new Tokens array for the next line (which is
-        // now currentLine)
+        // Finally, initializing a new Tokens array for the next line (which
+        // is now currentLine)
         tokensAllocationCapacity = tokensInitialAllocationSize;
         lexer->tokens[currentLine] =
             malloc(tokensAllocationCapacity * sizeof(Token));
@@ -337,6 +346,17 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       if (lLength > 0) {
         TokensTypes classifiedToken;
         if (isRecordingVariable == 1) {
+          Variable *variable =
+              (Variable *)hashmap_get_value(&variables, lBuffer);
+          if (variable != NULL) {
+            printf("Error tokenizing the source code: Cannot declare a new "
+                   "variable named \"%s\" at %zu:%zu as it is already defined "
+                   "before\n",
+                   lBuffer, currentLine + 1, currentLineCursor - lLength);
+            lexer_clean(lexer);
+            free(lBuffer);
+            return NULL;
+          }
           add_variable(lBuffer, recordingVariableType);
           classifiedToken = recordingVariableType;
           recordingVariableType = VARIABLE;
@@ -384,8 +404,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
       // Now, we will be adding the END_OF_LINE token after we finish the last
       // token, then we will reset the lBuffer and lLength if we weren't in a
-      // string. Note that we are using currentLine-1 since we styarted this if
-      // statement with adding one to the currentLine
+      // string. Note that we are using currentLine-1 since we styarted this
+      // if statement with adding one to the currentLine
 
       if (lexer_add_token(&currentLine, &tokensNumberInCurrentLine,
                           &tokensAllocationCapacity,
@@ -505,6 +525,17 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         TokensTypes classifiedToken;
         // We check if there is a variable being recorded first:
         if (isRecordingVariable == 1) {
+          Variable *variable =
+              (Variable *)hashmap_get_value(&variables, lBuffer);
+          if (variable != NULL) {
+            printf("Error tokenizing the source code: Cannot declare a new "
+                   "variable named \"%s\" at %zu:%zu as it is already defined "
+                   "before\n",
+                   lBuffer, currentLine + 1, currentLineCursor - lLength);
+            lexer_clean(lexer);
+            free(lBuffer);
+            return NULL;
+          }
           add_variable(lBuffer, recordingVariableType);
           classifiedToken = recordingVariableType;
           recordingVariableType = VARIABLE;
@@ -563,8 +594,8 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           return NULL;
         }
 
-        // Finally, we will check if the token will require recording a variable
-        // or not.
+        // Finally, we will check if the token will require recording a
+        // variable or not.
         if (classifiedToken == VARIABLE_NUMBER_KEYWORD) {
           isRecordingVariable = 1;
           recordingVariableType = VARIABLE_NUMBER;
@@ -635,9 +666,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       }
     }
 
-    // Now, no whitespace detected, but before writing into the buffer, we need
-    // to check if the buffer previously is a string or a comment or not, if
-    // not, we will check it.
+    // Now, no whitespace detected, but before writing into the buffer, we
+    // need to check if the buffer previously is a string or a comment or not,
+    // if not, we will check it.
     if (isString == 0 && isComment == 0) {
       // First of all, we will check if it is a symbol, so we will tokenize it
       // directly, resetting the variable recording and number recording.
@@ -716,7 +747,17 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         TokensTypes symbolToken = symbol_to_token(p);
         // First we will check if we are recording a variable:
         if (isRecordingVariable == 1) {
-
+          Variable *variable =
+              (Variable *)hashmap_get_value(&variables, lBuffer);
+          if (variable != NULL) {
+            printf("Error tokenizing the source code: Cannot declare a new "
+                   "variable named \"%s\" at %zu:%zu as it is already defined "
+                   "before\n",
+                   lBuffer, currentLine + 1, currentLineCursor - lLength);
+            lexer_clean(lexer);
+            free(lBuffer);
+            return NULL;
+          }
           if (lexer_add_token(&currentLine, &tokensNumberInCurrentLine,
                               &tokensAllocationCapacity,
                               &lexer->tokens[currentLine], lBuffer,
@@ -823,6 +864,16 @@ Lexer *lexer_tokenify(Lexer *lexer) {
       // user tried to insert a digit as the first character of the variable
       // name:
       else if (isRecordingVariable == 1 && isdigit(*p) && lLength == 0) {
+        Variable *variable = (Variable *)hashmap_get_value(&variables, lBuffer);
+        if (variable != NULL) {
+          printf("Error tokenizing the source code: Cannot declare a new "
+                 "variable named \"%s\" at %zu:%zu as it is already defined "
+                 "before\n",
+                 lBuffer, currentLine + 1, currentLineCursor - lLength);
+          lexer_clean(lexer);
+          free(lBuffer);
+          return NULL;
+        }
         printf("Error tokenizing the source code: Cannot use a number digit as "
                "the beginning of a variable name at %zu:%zu",
                currentLine + 1, currentLineCursor);
@@ -831,9 +882,9 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         return NULL;
       }
 
-      // And then, we will check if the user has written a character that is not
-      // valid inside the variable name. So, we will therefore tokenize the
-      // variable and then check the symbol:
+      // And then, we will check if the user has written a character that is
+      // not valid inside the variable name. So, we will therefore tokenize
+      // the variable and then check the symbol:
       else if (isRecordingVariable == 1 &&
                is_variable_character_valid(p) == 0 && lLength > 0) {
         if (lexer_add_token(
