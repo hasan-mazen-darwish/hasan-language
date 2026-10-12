@@ -122,22 +122,25 @@ static char *getTokenText(TokensTypes type) {
     return "COMMENT";
   case UNKNOWN:
     return "UNKNOWN";
+
+  default:
+    return "Unspecified token in the debugger";
   }
 }
 
 void lexer_debug_tokens(Lexer *lexer) {
-  for (int i = 0; i < lexer->lines; i++) {
+  for (size_t i = 0; i < lexer->lines; i++) {
     if (lexer->tokens[i] == NULL) {
-      printf("!!ERROR!! lexer->tokens[%d] is NULL.\n", i);
+      printf("!!ERROR!! lexer->tokens[%zu] is NULL.\n", i);
       break;
     }
-    printf(COLORS_LINE_NUMBERING "%d." COLORS_RESET " ", i + 1);
+    printf(COLORS_LINE_NUMBERING "%zu." COLORS_RESET " ", i + 1);
     TokensTypes type;
     Token *p = lexer->tokens[i];
     type = (*p).type;
     while (type != END_OF_LINE) {
       if (p == NULL) {
-        printf("!!ERROR!! a token at line %d is NULL.\n", i);
+        printf("!!ERROR!! a token at line %zu is NULL.\n", i);
         break;
       }
       if ((*p).type == END_OF_LINE)

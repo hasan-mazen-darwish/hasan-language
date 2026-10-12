@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "./lexer.h"
 #include "../utils/hashmap.h"
 #include <ctype.h>
@@ -40,8 +41,7 @@ add_variable(char *name,
   return hashmap_set_key(&variables, name, boxedToken);
 }
 
-static TokensTypes classify_token(char **lexeme, size_t *lexemeLength,
-                                  int *isString) {
+static TokensTypes classify_token(char **lexeme) {
   if (isHashmapInitialized == 0) {
     keywords = hashmap_new();
     add_keyword("print", FUNCTION_PRINT);
@@ -366,7 +366,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           isRecordingNumber = 0;
           isDotSpotted = 0;
         } else {
-          classifiedToken = classify_token(&lBuffer, &lLength, &isString);
+          classifiedToken = classify_token(&lBuffer);
         }
 
         if (classifiedToken == UNKNOWN) {
@@ -461,7 +461,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
             isRecordingNumber = 0;
             isDotSpotted = 0;
           } else
-            classifiedToken = classify_token(&lBuffer, &lLength, &isString);
+            classifiedToken = classify_token(&lBuffer);
 
           if (lexer_add_token(
                   &currentLine, &tokensNumberInCurrentLine,
@@ -550,7 +550,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
         }
 
         else {
-          classifiedToken = classify_token(&lBuffer, &lLength, &isString);
+          classifiedToken = classify_token(&lBuffer);
         }
 
         // If it is a symbol, we take the corresponding token:
@@ -689,17 +689,14 @@ Lexer *lexer_tokenify(Lexer *lexer) {
           two_tokens_buffer[1] = *(p + 1);
           two_tokens_buffer[2] = '\0';
 
-          size_t lexemeLength = 2;
-          TokensTypes classifiedToken =
-              classify_token(&two_tokens_buffer, &lexemeLength, &isString);
+          TokensTypes classifiedToken = classify_token(&two_tokens_buffer);
           if (classifiedToken != UNKNOWN) {
             p += 2;
             if (classifiedToken == COMMENT) {
               isComment = 1;
               free(two_tokens_buffer);
               if (lLength > 0) {
-                TokensTypes tokenBeforeComment =
-                    classify_token(&lBuffer, &lLength, &isString);
+                TokensTypes tokenBeforeComment = classify_token(&lBuffer);
                 if (tokenBeforeComment == UNKNOWN) {
                   printf(
                       "Error tokenizing the sorce code: Unknown token \"%s\" "
@@ -794,8 +791,7 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
         // If the lexeme is full, we will tokenize it too:
         else if (lLength > 0) {
-          TokensTypes classifiedToken =
-              classify_token(&lBuffer, &lLength, &isString);
+          TokensTypes classifiedToken = classify_token(&lBuffer);
           if (classifiedToken == UNKNOWN) {
             printf("Error tokenizing the source code: unknown token \"%s\" at "
                    "%zu:%zu",
@@ -1038,7 +1034,6 @@ Lexer *lexer_tokenify(Lexer *lexer) {
                       lexer->srcLength - 1, END_OF_LINE) == 0) {
     printf("Error reallocating memory for the END_OF_LINE of the last line "
            "of the source code tokens!\n");
-    free(lBuffer);
     lexer_clean(lexer);
     return NULL;
   }

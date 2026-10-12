@@ -22,9 +22,6 @@ typedef struct Hashmap {
 } Hashmap;
 
 void hashmap_clean_hashmap(Hashmap *hashmap);
-static inline uint64_t hashmap_hash_function(char *key)
-    __attribute__((pure)); // This hash function will be
-                           // following the FNV-1a algorithm.
 Hashmap *
 hashmap_default_value(Hashmap *original); // A function that initializes the
                                           // hashmap to a proper default value

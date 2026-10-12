@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (fileExtension > 0) {
+    if (fileExtension) {
       memmove(&fileExtension[1], &fileExtension[0],
               fileExtensionLength * sizeof(char));
     }
