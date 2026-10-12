@@ -13,11 +13,14 @@ compiled/main.o: main.c libs/includes.h
 compiled/hashmap.o: libs/utils/hashmap.c libs/utils/hashmap.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o
+compiled/parser.o: libs/parser/parser.c libs/parser/parser.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o compiled/parser.o
 	$(CC) $^ -o $@
 
 clean:
-	rm ./compiled/*
+	rm -rf ./compiled/*
 	rm app
 
 runscript:
