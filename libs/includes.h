@@ -6,6 +6,8 @@
 #include "./lexer/lexerLibs.h"
 #include "./utils/hashmap.h"
 
+#include "./parser/parser.h"
+
 // IWYU pragma: end_exports
 
 #endif // !_LANGUAGE_ALL_INCLUDES_H
