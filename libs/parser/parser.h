@@ -2,6 +2,7 @@
 #define _PARSER_H
 
 #include "../lexer/lexerLibs.h"
+#include <stdio.h>
 
 //
 // --- Enums ---
@@ -37,6 +38,7 @@ struct ParserNode {
 typedef struct Parser {
   Lexer *lexer;
   ParserNode *nodes;
+  size_t nodes_size;
 } Parser;
 
 //
