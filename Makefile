@@ -23,5 +23,5 @@ clean:
 	rm -rf ./compiled/*
 	rm app
 
-runscript:
-	./app ./script.hasan
+runscript: app
+	clear && echo "" && echo "" && echo "" && ./app ./script.hasan && echo "" && echo "" && echo ""
