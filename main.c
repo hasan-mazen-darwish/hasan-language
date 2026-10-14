@@ -1,5 +1,6 @@
 #include "./libs/includes.h"
 #include "libs/lexer/lexer.h"
+#include "libs/parser/parser.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,6 +131,11 @@ int main(int argc, char **argv) {
     exit(1);
   }
   lexer_debug_tokens(&lexer);
+
+  Parser parser = parser_new(&lexer);
+  parser_parse(&parser);
+
+  parser_clean(&parser);
   lexer_clean(&lexer);
 
   return 0;
