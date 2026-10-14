@@ -9,29 +9,42 @@
 //
 typedef enum { VARIABLE_ASSIGNING } ParserNodeTypes;
 
+typedef enum { NODE, EXPRESSION, OPERATION } ParserNodeExpressionTypes;
+
 typedef enum {
-  TEXT, // For like variable names
-  NUMBER,
-  ARITHMETIC_OPERATION,
-  NODE
-} ParserExpressionTypes;
+  EXPRESSION_VALUE_NUMBER,
+  EXPRESSION_VALUE_STRING,
+  EXPRESSION_VALUE,
+  EXPRESSION_VARIABLE,
+  EXPRESSION_VARIABLE_STRING,
+  EXPRESSION_VARIABLE_NUMBER
+} ParserExpressions;
 
 //
 // --- Structs of the parser ---
 //
 typedef struct ParserNode ParserNode;
 
+typedef struct ParserExpression {
+  ParserExpressions type;
+} ParserExpression;
+
+typedef struct ParserOperation {
+} ParserOperation;
+
 union ParserNodeSide {
   ParserNode *node;
+  ParserExpression expression;
+  ParserOperation operation;
 };
 
 struct ParserNode {
   ParserNodeTypes type;
 
-  ParserExpressionTypes firstSideType;
+  ParserNodeExpressionTypes firstSideType;
   union ParserNodeSide firstSide;
 
-  ParserExpressionTypes secondSideType;
+  ParserNodeExpressionTypes secondSideType;
   union ParserNodeSide secondSide;
 };
 
