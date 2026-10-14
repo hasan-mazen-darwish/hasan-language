@@ -34,3 +34,27 @@ void parser_clean(Parser *parser) {
   }
   free(parser);
 }
+
+Parser *parser_parse(Parser *parser) {
+  if (parser == NULL || parser->lexer == NULL) {
+    printf("Error happened in the parsing: null source.\n");
+    return NULL;
+  }
+
+  // Allocating memory for the nodes:
+  if (parser->nodes == NULL || parser->nodes_size < parser->lexer->lines) {
+    parser->nodes_size = parser->lexer->lines;
+    parser->nodes = malloc(parser->nodes_size * sizeof(ParserNode));
+    if (parser->nodes == NULL) {
+      printf("Error allocating memory for the parser's nodes!\n");
+      parser_clean(parser);
+      return NULL;
+    }
+  }
+
+  // Let's start with looping through the tokens:
+  for (size_t i = 0; i < parser->lexer->lines; i++) {
+  }
+
+  return parser;
+}
