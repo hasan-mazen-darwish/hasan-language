@@ -54,7 +54,8 @@ static int is_variable_keyword(Token *cursor) {
 //
 
 Parser *parser_parse(Parser *parser) {
-  if (parser == NULL || parser->lexer == NULL) {
+  if (parser == NULL || parser->lexer == NULL ||
+      parser->lexer->tokens == NULL) {
     printf("Error happened in the parsing: null source.\n");
     return NULL;
   }
@@ -72,6 +73,46 @@ Parser *parser_parse(Parser *parser) {
 
   // Let's start with looping through the tokens:
   for (size_t i = 0; i < parser->lexer->lines; i++) {
+    Token *line = parser->lexer->tokens[i];
+    if (line == NULL)
+      continue;
+    Token *cursor = line;
+
+    // Checking for the variables:
+    if (is_variable_keyword(cursor)) {
+      TokensTypes varType;
+      switch (cursor->type) {
+      case VARIABLE_NUMBER_KEYWORD:
+        varType = VARIABLE_NUMBER;
+        break;
+      case VARIABLE_STRING_KEYWORD:
+        varType = VARIABLE_STRING;
+        break;
+      case VARIABLE_BOOLEAN_KEYWORD:
+        varType = VARIABLE_BOOLEAN;
+        break;
+      default:
+        varType = UNKNOWN;
+        break;
+      }
+      if (varType == UNKNOWN) {
+        printf("Could not detect the variable type of the token \"%s\" at "
+               "%zu:%zu.\n",
+               (cursor + 1)->lexeme, cursor->line, cursor->start);
+        parser_clean(parser);
+        return NULL;
+      }
+
+      // We will deny any non-variable after the variable declaring keyword:
+      if ((cursor + 1)->type != varType) {
+        printf("The token that comes after \"%s\" should not be either a "
+               "number (or a variable name starting with a number), a keyword, "
+               "a symbol, nor a string. At %zu:%zu.\n",
+               cursor->lexeme, (cursor + 1)->line, (cursor + 1)->start);
+        parser_clean(parser);
+        return NULL;
+      }
+    }
   }
 
   return parser;
