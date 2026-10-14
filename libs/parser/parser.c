@@ -35,6 +35,24 @@ void parser_clean(Parser *parser) {
   free(parser);
 }
 
+//
+//
+//
+// ==== HELPER FUNCTIONS ====
+//
+//
+//
+
+static int is_variable_keyword(Token *cursor) {
+  return cursor->type == VARIABLE_NUMBER_KEYWORD ||
+         cursor->type == VARIABLE_STRING_KEYWORD ||
+         cursor->type == VARIABLE_BOOLEAN_KEYWORD;
+}
+
+//
+//
+//
+
 Parser *parser_parse(Parser *parser) {
   if (parser == NULL || parser->lexer == NULL) {
     printf("Error happened in the parsing: null source.\n");
