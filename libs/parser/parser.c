@@ -64,6 +64,26 @@ static int is_variable_keyword(Token *cursor) {
          cursor->type == VARIABLE_BOOLEAN_KEYWORD;
 }
 
+int add_node_to_parser(Parser *parser, ParserNode node) {
+  // Returns 1 for success and 0 for failure.
+  if (parser->nodes_used >= parser->nodes_size) {
+    parser->nodes_size *= 2;
+    ParserNode *temp =
+        realloc(parser->nodes, parser->nodes_size * sizeof(ParserNode));
+    if (temp == NULL) {
+      printf("Error reallocating memory for new nodes in the parser!\n");
+      parser_clean(parser);
+      return 0;
+    }
+    parser->nodes = temp;
+  }
+
+  parser->nodes[parser->nodes_used] = node;
+  parser->nodes_used++;
+
+  return 1;
+}
+
 //
 //
 //
