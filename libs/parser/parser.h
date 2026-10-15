@@ -52,6 +52,7 @@ typedef struct Parser {
   Lexer *lexer;
   ParserNode *nodes;
   size_t nodes_size;
+  size_t nodes_used;
 } Parser;
 
 //

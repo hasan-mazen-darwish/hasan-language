@@ -2,7 +2,19 @@
 #include <stdlib.h>
 
 Parser parser_new(Lexer *lexer) {
-  Parser parser = {.lexer = lexer, .nodes = NULL, .nodes_size = 0};
+  Parser parser = {.lexer = lexer,
+                   .nodes = NULL,
+                   .nodes_size = lexer->lines,
+                   .nodes_used = 0};
+
+  parser.nodes = malloc(parser.nodes_size * sizeof(ParserNode));
+  if (parser.nodes == NULL) {
+    printf("Error allocating memory for the parser's nodes!\n");
+    lexer_clean(lexer);
+    exit(1);
+    return parser;
+  }
+
   return parser;
 }
 
@@ -24,9 +36,12 @@ static void node_cleanup(ParserNode node) {
 }
 
 void parser_clean(Parser *parser) {
-  lexer_clean(parser->lexer);
+  if (parser->lexer != NULL) {
+    lexer_clean(parser->lexer);
+    parser->lexer = NULL;
+  }
   if (parser->nodes != NULL) {
-    for (size_t i = 0; i < parser->nodes_size; i++) {
+    for (size_t i = 0; i < parser->nodes_used; i++) {
       node_cleanup(parser->nodes[i]);
     }
     free(parser->nodes);
