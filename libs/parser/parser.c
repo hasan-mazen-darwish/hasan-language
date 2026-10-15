@@ -120,12 +120,19 @@ Parser *parser_parse(Parser *parser) {
 
       // We will deny any non-variable after the variable declaring keyword:
       if ((cursor + 1)->type != varType) {
-        printf("The token that comes after \"%s\" should not be either a "
-               "number (or a variable name starting with a number), a keyword, "
-               "a symbol, nor a string. At %zu:%zu.\n",
-               cursor->lexeme, (cursor + 1)->line, (cursor + 1)->start);
+        printf("The token that comes after \"%s\" should be a valid variable "
+               "name%s. At %zu:%zu.\n",
+               cursor->lexeme,
+               (cursor + 1)->type == DATA_NUMBER
+                   ? " (The variable should not begin with a number)"
+                   : "",
+               (cursor + 1)->line, (cursor + 1)->start);
         parser_clean(parser);
         return NULL;
+      }
+
+      cursor += 2; // We are now in the token that's after the variable.
+      if (cursor->type == END_OF_LINE) {
       }
     }
   }
