@@ -42,7 +42,6 @@ void parser_clean(Parser *parser) {
     free(parser->nodes);
     parser->nodes = NULL;
   }
-  free(parser);
 }
 
 //
