@@ -1,5 +1,7 @@
 // Defining two numbers:
-number a1 = 4.2
+number a1
+string text
+truth boolean
 number b = 5.01
 
 // Printing the sum of the two variables:
