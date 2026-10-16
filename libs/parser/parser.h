@@ -34,18 +34,18 @@ struct ParserNode {
     struct numberVariable {
       char *identifier;
       double value;
-    };
+    } numberVariable;
 
     struct stringVariable {
       char *identifier;
       char *value;
-    };
+    } stringVariable;
 
-    struct booleanValue {
+    struct booleanVariable {
       char *identifier;
       int value;
-    };
-  };
+    } booleanVariable;
+  } content;
 };
 
 typedef struct Parser {

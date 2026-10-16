@@ -1,5 +1,6 @@
 #include "./parser.h"
 #include <stdlib.h>
+#include <string.h>
 
 Parser parser_new(Lexer *lexer) {
   Parser parser = {.lexer = lexer,
@@ -72,6 +73,24 @@ int add_node_to_parser(Parser *parser, ParserNode node) {
   parser->nodes_used++;
 
   return 1;
+}
+
+int add_number_variable(Parser *parser, char *name, double value) {
+  ParserNode node = {NODE_NUMBER_VARIABLE, {.numberVariable = {name, value}}};
+  return add_node_to_parser(parser, node);
+}
+
+int add_string_variable(Parser *parser, char *name, char *value) {
+  ParserNode node = {NODE_STRING_VARIABLE,
+                     {.stringVariable = {name, strdup(value)}}};
+  return add_node_to_parser(parser, node);
+}
+
+int add_boolean_variable(Parser *parser, char *name, int value) {
+  if (value != 0 && value != 1)
+    return 0;
+  ParserNode node = {NODE_BOOLEAN_VARIABLE, {.booleanVariable = {name, value}}};
+  return add_node_to_parser(parser, node);
 }
 
 //
