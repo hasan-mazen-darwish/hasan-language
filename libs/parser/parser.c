@@ -23,17 +23,7 @@ void parser_attach_lexer(Parser *parser, Lexer *lexer) {
   parser->lexer = lexer;
 }
 
-static void node_cleanup(ParserNode node) {
-  if (node.firstSideType == NODE) {
-    node_cleanup(*node.firstSide.node);
-    free(node.firstSide.node);
-  }
-
-  if (node.secondSideType == NODE) {
-    node_cleanup(*node.secondSide.node);
-    free(node.secondSide.node);
-  }
-}
+static void node_cleanup(ParserNode node) { return; }
 
 void parser_clean(Parser *parser) {
   if (parser->lexer != NULL) {
