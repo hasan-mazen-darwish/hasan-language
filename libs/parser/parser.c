@@ -163,8 +163,26 @@ Parser *parser_parse(Parser *parser) {
         return NULL;
       }
 
+      char *varName = (cursor + 1)->lexeme;
       cursor += 2; // We are now in the token that's after the variable.
       if (cursor->type == END_OF_LINE) {
+        // The variable was assigned to the default value!
+        int isVariableAdded = 0;
+        if (varType == VARIABLE_NUMBER)
+          isVariableAdded = add_number_variable(parser, varName, 0.0);
+        else if (varType == VARIABLE_STRING)
+          isVariableAdded = add_string_variable(parser, varName, "");
+        else if (varType == VARIABLE_BOOLEAN)
+          isVariableAdded = add_boolean_variable(parser, varName, 0);
+
+        // Checking if the variable got added successfully or not:
+        if (isVariableAdded == 0) {
+          printf("There was an error declaring the variable %s at %zu:%zu to "
+                 "the default value!\n",
+                 varName, (cursor - 1)->line, (cursor - 1)->start);
+          parser_clean(parser);
+          return NULL;
+        }
       }
     }
   }
