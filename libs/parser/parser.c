@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "./parser.h"
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +25,10 @@ void parser_attach_lexer(Parser *parser, Lexer *lexer) {
   parser->lexer = lexer;
 }
 
-static void node_cleanup(ParserNode node) { return; }
+static void node_cleanup(ParserNode node) {
+  if (node.type == NODE_STRING_VARIABLE)
+    free(node.content.stringVariable.value);
+}
 
 void parser_clean(Parser *parser) {
   if (parser->lexer != NULL) {
