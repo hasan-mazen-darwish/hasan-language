@@ -7,7 +7,16 @@
 //
 // --- Enums ---
 //
-typedef enum { VARIABLE_ASSIGNING } ParserNodeTypes;
+typedef enum {
+  NODE_NUMBER_VARIABLE,
+  NODE_STRING_VARIABLE,
+  NODE_BOOLEAN_VARIABLE,
+
+  NODE_NUMBER_VALUE,
+  NODE_STRING_VALUE,
+  NODE_TRUE_VALUE,
+  NODE_FALSE_VALUE
+} ParserNodeTypes;
 
 //
 // --- Structs of the parser ---
@@ -16,6 +25,27 @@ typedef struct ParserNode ParserNode;
 
 struct ParserNode {
   ParserNodeTypes type;
+
+  union content {
+    double number;
+    char *string;
+    int boolean;
+
+    struct numberVariable {
+      char *identifier;
+      double value;
+    };
+
+    struct stringVariable {
+      char *identifier;
+      char *value;
+    };
+
+    struct booleanValue {
+      char *identifier;
+      int value;
+    };
+  };
 };
 
 typedef struct Parser {
