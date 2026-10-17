@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <locale.h>
+#ifdef __APPLE__
+#include <xlocale.h>
+#endif
+
 Parser parser_new(Lexer *lexer) {
   Parser parser = {.lexer = lexer,
                    .nodes = NULL,
@@ -94,6 +99,11 @@ int add_boolean_variable(Parser *parser, char *name, int value) {
     return 0;
   ParserNode node = {NODE_BOOLEAN_VARIABLE, {.booleanVariable = {name, value}}};
   return add_node_to_parser(parser, node);
+}
+
+double my_strtod(const char *text) {
+  locale_t c_locale = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+  return strtod_l(text, NULL, c_locale);
 }
 
 //
