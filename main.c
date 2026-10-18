@@ -130,10 +130,14 @@ int main(int argc, char **argv) {
     printf("Error happened at lexifying (tokenizing) the source code!\n");
     exit(1);
   }
+  printf("------ Lexer content ------\n");
   lexer_debug_tokens(&lexer);
 
   Parser parser = parser_new(&lexer);
   parser_parse(&parser);
+
+  printf("\n------ Parser content ------\n");
+  parser_debug(&parser);
 
   parser_clean(&parser);
   lexer_clean(&lexer);

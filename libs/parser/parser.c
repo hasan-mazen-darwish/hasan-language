@@ -176,7 +176,7 @@ Parser *parser_parse(Parser *parser) {
       char *varName = (cursor + 1)->lexeme;
       cursor += 2; // We are now in the token that's after the variable.
       if (cursor->type == END_OF_LINE) {
-        // The variable was assigned to the default value!
+        // The variable will be assigned to the default value!
         int isVariableAdded = 0;
         if (varType == VARIABLE_NUMBER)
           isVariableAdded = add_number_variable(parser, varName, 0.0);

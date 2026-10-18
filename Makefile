@@ -16,7 +16,10 @@ compiled/hashmap.o: libs/utils/hashmap.c libs/utils/hashmap.h
 compiled/parser.o: libs/parser/parser.c libs/parser/parser.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o compiled/parser.o
+compiled/parserDebug.o: libs/parser/parserDebug.c libs/parser/parserDebug.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o compiled/parser.o compiled/parserDebug.o
 	$(CC) $^ -o $@
 
 clean:
