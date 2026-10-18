@@ -203,6 +203,17 @@ Parser *parser_parse(Parser *parser) {
           return NULL;
         }
       }
+
+      else if (cursor->type == SYMBOL_EQUALS) {
+        cursor++;
+        if (!check_variable_type_to_data_type(varType, cursor->type)) {
+          printf("Unmatching data types between the variable \"%s\" and the "
+                 "value given: \"%s\" at %zu:%zu!\n",
+                 varName, cursor->lexeme, cursor->line, cursor->start);
+          parser_clean(parser);
+          return NULL;
+        }
+      }
     }
   }
 
