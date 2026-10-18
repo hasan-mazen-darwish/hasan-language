@@ -207,8 +207,15 @@ check_begin:
     double value = my_strtod(cursor->lexeme);
     if (is_negative)
       value *= -1;
-    ParserNode n = {NODE_NUMBER_VALUE, {.number = value}};
-    *currentNode = n;
+    ParserNode *n = malloc(sizeof(ParserNode));
+    if (n == NULL) {
+      printf("Error allocating memory for the new parser node for the number "
+             "at %zu:%zu!\n",
+             cursor->line, cursor->start);
+      return 0;
+    }
+    n[0] = (ParserNode){NODE_NUMBER_VALUE, {.number = value}};
+    currentNode = n;
   }
 
   // The end of the check: the current cursor got hit with the END_OF_LINE
@@ -333,7 +340,7 @@ Parser *parser_parse(Parser *parser) {
           parser_clean(parser);
           return NULL;
         }
-        if (i <= 0) {
+        if (i == 1) {
           parser_clean(parser);
           return NULL;
         }
