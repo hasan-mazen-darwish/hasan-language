@@ -63,7 +63,7 @@ static int is_variable_keyword(Token *cursor) {
          cursor->type == VARIABLE_BOOLEAN_KEYWORD;
 }
 
-int add_node_to_parser(Parser *parser, ParserNode node) {
+static int add_node_to_parser(Parser *parser, ParserNode node) {
   // Returns 1 for success and 0 for failure.
   if (parser->nodes_used >= parser->nodes_size) {
     parser->nodes_size *= 2;
@@ -83,25 +83,25 @@ int add_node_to_parser(Parser *parser, ParserNode node) {
   return 1;
 }
 
-int add_number_variable(Parser *parser, char *name, double value) {
+static int add_number_variable(Parser *parser, char *name, double value) {
   ParserNode node = {NODE_NUMBER_VARIABLE, {.numberVariable = {name, value}}};
   return add_node_to_parser(parser, node);
 }
 
-int add_string_variable(Parser *parser, char *name, char *value) {
+static int add_string_variable(Parser *parser, char *name, char *value) {
   ParserNode node = {NODE_STRING_VARIABLE,
                      {.stringVariable = {name, strdup(value)}}};
   return add_node_to_parser(parser, node);
 }
 
-int add_boolean_variable(Parser *parser, char *name, int value) {
+static int add_boolean_variable(Parser *parser, char *name, int value) {
   if (value != 0 && value != 1)
     return 0;
   ParserNode node = {NODE_BOOLEAN_VARIABLE, {.booleanVariable = {name, value}}};
   return add_node_to_parser(parser, node);
 }
 
-double my_strtod(const char *text) {
+static double my_strtod(const char *text) {
   locale_t c_locale = newlocale(LC_ALL_MASK, "C", (locale_t)0);
   return strtod_l(text, NULL, c_locale);
 }
