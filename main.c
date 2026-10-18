@@ -132,12 +132,15 @@ int main(int argc, char **argv) {
   }
   printf("------ Lexer content ------\n");
   lexer_debug_tokens(&lexer);
+  printf("\n");
 
   Parser parser = parser_new(&lexer);
-  parser_parse(&parser);
+  Parser *result = parser_parse(&parser);
 
-  printf("\n------ Parser content ------\n");
-  parser_debug(&parser);
+  if (result != NULL) {
+    printf("------ Parser content ------\n");
+    parser_debug(&parser);
+  }
 
   parser_clean(&parser);
   lexer_clean(&lexer);
