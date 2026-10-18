@@ -116,7 +116,7 @@ static int add_number_variable_value(Parser *parser, char *name, double value) {
   return add_node_to_parser(parser, node);
 }
 
-static int add_string_variable(Parser *parser, char *name, char *value) {
+static int add_string_variable_value(Parser *parser, char *name, char *value) {
   ParserNode boxedValueNode = {NODE_STRING_VALUE, {.string = strdup(value)}};
   ParserNode *boxedValue = malloc(sizeof(ParserNode));
   if (boxedValue == NULL) {
@@ -132,7 +132,7 @@ static int add_string_variable(Parser *parser, char *name, char *value) {
   return add_node_to_parser(parser, node);
 }
 
-static int add_boolean_variable(Parser *parser, char *name, int value) {
+static int add_boolean_variable_value(Parser *parser, char *name, int value) {
   if (value != 0 && value != 1)
     return 0;
   ParserNode boxedValueNode = {value == 0 ? NODE_FALSE_VALUE : NODE_TRUE_VALUE,
@@ -163,6 +163,66 @@ static int check_variable_type_to_data_type(TokensTypes variable_type,
          (variable_type == VARIABLE_BOOLEAN &&
           (data_type == DATA_NUMBER || data_type == KEYWORD_TRUE ||
            data_type == KEYWORD_FALSE));
+}
+
+// Handling other variables values, like operations and arithmetics and even
+// other variables' values. Note: errors are going to be printed directly from
+// this function. This fucntion only returns the status code.
+static int add_number_variable_from_cursor(Parser *parser, char *varName,
+                                           Token *cursor) {
+  // Checking for empty assigning
+  if (cursor->type == END_OF_LINE && (cursor - 1)->type == SYMBOL_EQUALS) {
+    printf("Error parsing the source code: Attempting to assign no value to "
+           "the number variable \"%s\" at %zu:%zu\n",
+           varName, cursor->line, cursor->start);
+    return 0;
+  }
+
+  ParserNode node = {NODE_NUMBER_VARIABLE};
+  ParserNode *currentNode = NULL;
+
+  // Additional flags:
+  int is_negative = 0;
+  int used_sign = 0;
+
+  cursor--;
+check_begin:
+  cursor++;
+  if (used_sign &&
+      (cursor->type == SYMBOL_PLUS || cursor->type == SYMBOL_MINUS)) {
+    printf("Error parsing the source code: Another symbol got used directly "
+           "(cannot use %s and %s symbols like the way got used in the source "
+           "code) at %zu:%zu.",
+           (cursor - 1)->lexeme, cursor->lexeme, cursor->line, cursor->start);
+    return 0;
+  }
+  used_sign = cursor->type == SYMBOL_MINUS || cursor->type == SYMBOL_PLUS;
+
+  if (cursor->type == SYMBOL_MINUS) {
+    is_negative = 1;
+    goto check_begin;
+  }
+
+  if (cursor->type == DATA_NUMBER) {
+    double value = my_strtod(cursor->lexeme);
+    if (is_negative)
+      value *= -1;
+    ParserNode n = {NODE_NUMBER_VALUE, {.number = value}};
+    *currentNode = n;
+  }
+
+  // The end of the check: the current cursor got hit with the END_OF_LINE
+  if (cursor->type != END_OF_LINE) {
+    goto check_begin;
+  }
+
+  int returnValue = 0;
+  if (currentNode != NULL) {
+    node.content.numberVariable.identifier = varName;
+    node.content.numberVariable.value = currentNode;
+  }
+  returnValue = add_node_to_parser(parser, node);
+  return returnValue;
 }
 
 //
@@ -240,9 +300,9 @@ Parser *parser_parse(Parser *parser) {
         if (varType == VARIABLE_NUMBER)
           isVariableAdded = add_number_variable_value(parser, varName, 0.0);
         else if (varType == VARIABLE_STRING)
-          isVariableAdded = add_string_variable(parser, varName, "");
+          isVariableAdded = add_string_variable_value(parser, varName, "");
         else if (varType == VARIABLE_BOOLEAN)
-          isVariableAdded = add_boolean_variable(parser, varName, 0);
+          isVariableAdded = add_boolean_variable_value(parser, varName, 0);
 
         // Checking if the variable got added successfully or not:
         if (isVariableAdded == 0) {
@@ -256,10 +316,24 @@ Parser *parser_parse(Parser *parser) {
 
       else if (cursor->type == SYMBOL_EQUALS) {
         cursor++;
-        if (!check_variable_type_to_data_type(varType, cursor->type)) {
-          printf("Unmatching data types between the variable \"%s\" and the "
-                 "value given: \"%s\" at %zu:%zu!\n",
-                 varName, cursor->lexeme, cursor->line, cursor->start);
+        int i = 1;
+        switch (varType) {
+        case VARIABLE_NUMBER:
+          i -= add_number_variable_from_cursor(parser, varName, cursor);
+          break;
+        case VARIABLE_STRING:
+          break;
+        case VARIABLE_BOOLEAN:
+          break;
+
+        default:
+          printf("Fatal error parsing the source code: unknown variable \"%s\" "
+                 "type at %zu:%zu.\n",
+                 varName, cursor->line, cursor->start);
+          parser_clean(parser);
+          return NULL;
+        }
+        if (i <= 0) {
           parser_clean(parser);
           return NULL;
         }
