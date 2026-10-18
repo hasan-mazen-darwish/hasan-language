@@ -15,7 +15,8 @@ void parser_debug(Parser *parser) {
              "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
              "%f" COLORS_YELLOW_BOLD "." COLORS_RESET,
              node.content.numberVariable.identifier,
-             node.content.numberVariable.value);
+             // TODO: change this temporary glue
+             node.content.numberVariable.value->content.number);
       break;
 
     case NODE_STRING_VARIABLE:
@@ -24,7 +25,8 @@ void parser_debug(Parser *parser) {
              "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
              "\"%s\"" COLORS_YELLOW_BOLD "." COLORS_RESET,
              node.content.stringVariable.identifier,
-             node.content.stringVariable.value);
+             // TODO: change this temporary glue
+             node.content.stringVariable.value->content.string);
       break;
 
     case NODE_BOOLEAN_VARIABLE:
@@ -33,7 +35,9 @@ void parser_debug(Parser *parser) {
              "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
              "%s" COLORS_YELLOW_BOLD "." COLORS_RESET,
              node.content.booleanVariable.identifier,
-             node.content.booleanVariable.value == 0 ? "false" : "true");
+             // TODO: change this temporary glue
+             node.content.booleanVariable.value->content.boolean <= 0 ? "false"
+                                                                      : "true");
       break;
     }
     printf("\n");

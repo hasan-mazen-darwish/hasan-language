@@ -31,8 +31,25 @@ void parser_attach_lexer(Parser *parser, Lexer *lexer) {
 }
 
 static void node_cleanup(ParserNode node) {
-  if (node.type == NODE_STRING_VARIABLE)
+  switch (node.type) {
+  case NODE_NUMBER_VARIABLE:
+    node_cleanup(*node.content.numberVariable.value);
+    free(node.content.numberVariable.value);
+    break;
+  case NODE_STRING_VARIABLE:
+    node_cleanup(*node.content.stringVariable.value);
     free(node.content.stringVariable.value);
+    break;
+  case NODE_BOOLEAN_VARIABLE:
+    node_cleanup(*node.content.booleanVariable.value);
+    free(node.content.booleanVariable.value);
+    break;
+  case NODE_STRING_VALUE:
+    free(node.content.string);
+    break;
+  default:
+    break;
+  }
 }
 
 void parser_clean(Parser *parser) {
@@ -83,21 +100,54 @@ static int add_node_to_parser(Parser *parser, ParserNode node) {
   return 1;
 }
 
-static int add_number_variable(Parser *parser, char *name, double value) {
-  ParserNode node = {NODE_NUMBER_VARIABLE, {.numberVariable = {name, value}}};
+static int add_number_variable_value(Parser *parser, char *name, double value) {
+  ParserNode boxedValueNode = {NODE_NUMBER_VALUE, {.number = value}};
+  ParserNode *boxedValue = malloc(sizeof(ParserNode));
+  if (boxedValue == NULL) {
+    printf("Error allocating memory for a new number variable! (variable %s; "
+           "value %f)\n",
+           name, value);
+    return 0;
+  }
+  boxedValue[0] = boxedValueNode;
+
+  ParserNode node = {NODE_NUMBER_VARIABLE,
+                     {.numberVariable = {name, boxedValue}}};
   return add_node_to_parser(parser, node);
 }
 
 static int add_string_variable(Parser *parser, char *name, char *value) {
+  ParserNode boxedValueNode = {NODE_STRING_VALUE, {.string = strdup(value)}};
+  ParserNode *boxedValue = malloc(sizeof(ParserNode));
+  if (boxedValue == NULL) {
+    printf("Error allocating memory for a new string variable! (variable %s; "
+           "value %s)\n",
+           name, value);
+    return 0;
+  }
+  boxedValue[0] = boxedValueNode;
+
   ParserNode node = {NODE_STRING_VARIABLE,
-                     {.stringVariable = {name, strdup(value)}}};
+                     {.stringVariable = {name, boxedValue}}};
   return add_node_to_parser(parser, node);
 }
 
 static int add_boolean_variable(Parser *parser, char *name, int value) {
   if (value != 0 && value != 1)
     return 0;
-  ParserNode node = {NODE_BOOLEAN_VARIABLE, {.booleanVariable = {name, value}}};
+  ParserNode boxedValueNode = {value == 0 ? NODE_FALSE_VALUE : NODE_TRUE_VALUE,
+                               {.boolean = value}};
+  ParserNode *boxedValue = malloc(sizeof(ParserNode));
+  if (boxedValue == NULL) {
+    printf("Error allocating memory for a new boolean variable! (variable %s; "
+           "value %s)\n",
+           name, value <= 0 ? "false" : "true");
+    return 0;
+  }
+  boxedValue[0] = boxedValueNode;
+
+  ParserNode node = {NODE_BOOLEAN_VARIABLE,
+                     {.booleanVariable = {name, boxedValue}}};
   return add_node_to_parser(parser, node);
 }
 
@@ -188,7 +238,7 @@ Parser *parser_parse(Parser *parser) {
         // The variable will be assigned to the default value!
         int isVariableAdded = 0;
         if (varType == VARIABLE_NUMBER)
-          isVariableAdded = add_number_variable(parser, varName, 0.0);
+          isVariableAdded = add_number_variable_value(parser, varName, 0.0);
         else if (varType == VARIABLE_STRING)
           isVariableAdded = add_string_variable(parser, varName, "");
         else if (varType == VARIABLE_BOOLEAN)

@@ -33,17 +33,17 @@ struct ParserNode {
 
     struct numberVariable {
       char *identifier;
-      double value;
+      ParserNode *value;
     } numberVariable;
 
     struct stringVariable {
       char *identifier;
-      char *value;
+      ParserNode *value;
     } stringVariable;
 
     struct booleanVariable {
       char *identifier;
-      int value;
+      ParserNode *value;
     } booleanVariable;
   } content;
 };
