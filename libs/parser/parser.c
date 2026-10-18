@@ -106,6 +106,15 @@ static double my_strtod(const char *text) {
   return strtod_l(text, NULL, c_locale);
 }
 
+static int check_variable_type_to_data_type(TokensTypes variable_type,
+                                            TokensTypes data_type) {
+  return (variable_type == VARIABLE_NUMBER && data_type == DATA_NUMBER) ||
+         (variable_type == VARIABLE_STRING && data_type == DATA_STRING) ||
+         (variable_type == VARIABLE_BOOLEAN &&
+          (data_type == DATA_NUMBER || data_type == KEYWORD_TRUE ||
+           data_type == KEYWORD_FALSE));
+}
+
 //
 //
 //
