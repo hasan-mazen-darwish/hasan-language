@@ -15,8 +15,16 @@ typedef enum {
   NODE_NUMBER_VALUE,
   NODE_STRING_VALUE,
   NODE_TRUE_VALUE,
-  NODE_FALSE_VALUE
+  NODE_FALSE_VALUE,
+  NODE_OPERATION,
 } ParserNodeTypes;
+
+typedef enum {
+  PARSER_OPERATION_ADDITION,
+  PARSER_OPERATION_SUBTRACTION,
+  PARSER_OPERATION_MULTIPLICATION,
+  PARSER_OPERATION_DIVISION
+} ParserOperation;
 
 //
 // --- Structs of the parser ---
@@ -45,6 +53,12 @@ struct ParserNode {
       char *identifier;
       ParserNode *value;
     } booleanVariable;
+
+    struct operation {
+      ParserOperation type;
+      ParserNode *node1;
+      ParserNode *node2;
+    } operation;
   } content;
 };
 
