@@ -51,18 +51,87 @@ const char *get_node_false_value = COLORS_YELLOW_BOLD
 //
 //
 
+void print_number_variable(ParserNode node) {
+  printf(COLORS_YELLOW_BOLD "Defining a number variable called " COLORS_RED_BOLD
+                            "\"%s\"" COLORS_YELLOW_BOLD
+                            ". The value attached to it is:\n",
+         node.content.numberVariable.identifier);
+
+  unsigned int branches_number = 1, old_branches_number = 1;
+  char *branches = malloc((branches_number + 1) * sizeof(char));
+  if (branches == NULL) {
+    printf("Error allocating memory for the parser debugger's first branch "
+           "char!\n");
+    exit(1);
+  }
+  strcpy(branches, "-");
+
+  // This loop will check all the nodes and then print them all together:
+  ParserNode *n = malloc(sizeof(ParserNode));
+  if (n == NULL) {
+    printf("Error allocating memory for the initial temporary parser node!\n");
+    exit(1);
+  }
+  int need_to_loop_back = 0;
+
+loop:
+  if (branches_number != old_branches_number) {
+    char *temp = realloc(branches, (branches_number + 1) * sizeof(char));
+    if (temp == NULL) {
+      printf("Error reallocating branches characters for a new branch!\n");
+      free(branches);
+      exit(1);
+    }
+    branches = temp;
+    temp[branches_number - 1] = '-';
+    temp[branches_number] = '\0';
+    old_branches_number = branches_number;
+  }
+
+  char *debug_text = "(No text defined for this node)";
+
+  ParserNode cn = *node.content.numberVariable.value; // Stands for current node
+
+  switch (cn.type) {
+  case NODE_NUMBER_VALUE:
+    debug_text = get_node_number_value(cn.content.number);
+    break;
+  case NODE_OPERATION:
+    printf(""); // To get rid from that annoying "Declaration after label is a
+                // C23 extension" warning
+    ParserOperation o = cn.content.operation.type;
+    char *operation =
+        o == PARSER_OPERATION_SUBTRACTION
+            ? "subtraction"
+            : (o == PARSER_OPERATION_ADDITION
+                   ? "additrion"
+                   : (o == PARSER_OPERATION_DIVISION ? "division"
+                                                     : "multiplication"));
+    snprintf(debug_text, 10240,
+             "An operation of " COLORS_RED_BOLD "%s" COLORS_YELLOW_BOLD
+             " that has these two nodes:",
+             operation);
+    branches_number++;
+    need_to_loop_back = 1;
+    break;
+
+  default:
+    break;
+  }
+
+  printf("\033[0;1;32m%s " COLORS_YELLOW_BOLD "%s" COLORS_RESET "\n", branches,
+         debug_text);
+  if (need_to_loop_back == 1)
+    goto loop;
+  free(branches);
+}
+
 void parser_debug(Parser *parser) {
   for (int i = 0; i < parser->nodes_used; i++) {
     ParserNode node = parser->nodes[i];
     switch (node.type) {
     case NODE_NUMBER_VARIABLE:
-      printf(COLORS_YELLOW_BOLD
-             "Defining a number variable named " COLORS_RED_BOLD
-             "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
-             "%f" COLORS_YELLOW_BOLD "." COLORS_RESET,
-             node.content.numberVariable.identifier,
-             // TODO: change this temporary glue
-             node.content.numberVariable.value->content.number);
+      print_number_variable(node);
       break;
 
     case NODE_STRING_VARIABLE:
