@@ -1,4 +1,5 @@
 #include "./parserDebug.h"
+#include "parser.h"
 #include <stdio.h>
 
 #define COLORS_YELLOW_BOLD "\033[0;1;33m"
@@ -38,6 +39,32 @@ void parser_debug(Parser *parser) {
              // TODO: change this temporary glue
              node.content.booleanVariable.value->content.boolean <= 0 ? "false"
                                                                       : "true");
+      break;
+
+    case NODE_NUMBER_VALUE:
+      printf(COLORS_YELLOW_BOLD "A number value of " COLORS_RED_BOLD
+                                "%f" COLORS_YELLOW_BOLD ".\n" COLORS_RESET,
+             node.content.number);
+      break;
+
+    case NODE_STRING_VALUE:
+      printf(COLORS_RED_BOLD "A string value of " COLORS_RED_BOLD
+                             "\"%s\"" COLORS_YELLOW_BOLD ".\n" COLORS_RESET,
+             node.content.string);
+      break;
+
+    case NODE_TRUE_VALUE:
+      printf(COLORS_YELLOW_BOLD "A " COLORS_RED_BOLD "true" COLORS_YELLOW_BOLD
+                                " value.\n" COLORS_RESET);
+      break;
+
+    case NODE_FALSE_VALUE:
+      printf(COLORS_YELLOW_BOLD "A " COLORS_RED_BOLD "false" COLORS_YELLOW_BOLD
+                                " value.\n" COLORS_RESET);
+      break;
+
+    case NODE_OPERATION:
+      printf("An operation got detected! (still debugging not handled)\n");
       break;
     }
     printf("\n");
