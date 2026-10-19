@@ -199,6 +199,19 @@ check_begin:
   used_sign = cursor->type == SYMBOL_MINUS || cursor->type == SYMBOL_PLUS;
 
   if (cursor->type == SYMBOL_MINUS) {
+    if (currentNode != NULL) {
+      ParserNode *n = malloc(sizeof(ParserNode));
+      if (n == NULL) {
+        printf("Error allocating memory for the new parser node for the number "
+               "at %zu:%zu!\n",
+               cursor->line, cursor->start);
+        return 0;
+      }
+      n[0] = (ParserNode){
+          NODE_OPERATION,
+          {.operation = {PARSER_OPERATION_SUBTRACTION, currentNode, NULL}}};
+      currentNode = n;
+    }
     is_negative = 1;
     goto check_begin;
   }
@@ -215,7 +228,12 @@ check_begin:
       return 0;
     }
     n[0] = (ParserNode){NODE_NUMBER_VALUE, {.number = value}};
-    currentNode = n;
+
+    if (currentNode != NULL && currentNode->type == NODE_OPERATION) {
+      currentNode->content.operation.node2 = n;
+      goto check_begin;
+    } else
+      currentNode = n;
   }
 
   // The end of the check: the current cursor got hit with the END_OF_LINE
