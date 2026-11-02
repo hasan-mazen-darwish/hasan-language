@@ -59,6 +59,10 @@ static void print_branches(int branches_number_to_print) {
   printf(COLORS_RESET " ");
 }
 
+// Helper functions for the print_number_variable function:
+static void number_operation_print(ParserNode operation_node,
+                                   int current_branches_number);
+
 static void print_number_variable(ParserNode node,
                                   int initial_branches_number) {
   if (initial_branches_number > 1)
@@ -90,21 +94,7 @@ static void print_number_variable(ParserNode node,
     branches_number++;
     return;
   case NODE_OPERATION:
-    printf(""); // To get rid from that annoying "Declaration after label is a
-                // C23 extension" warning
-    ParserOperation o = cn.content.operation.type;
-    char *operation =
-        o == PARSER_OPERATION_SUBTRACTION
-            ? "subtraction"
-            : (o == PARSER_OPERATION_ADDITION
-                   ? "additrion"
-                   : (o == PARSER_OPERATION_DIVISION ? "division"
-                                                     : "multiplication"));
-    snprintf(debug_text, 10240,
-             "An operation of " COLORS_RED_BOLD "%s" COLORS_YELLOW_BOLD
-             " that has these two nodes:",
-             operation);
-    branches_number++;
+    number_operation_print(cn, branches_number);
     break;
 
   default:
@@ -113,6 +103,27 @@ static void print_number_variable(ParserNode node,
 
   print_branches(branches_number);
   printf(COLORS_YELLOW_BOLD "%s" COLORS_RESET "\n", debug_text);
+}
+
+static void number_operation_print(ParserNode operation_node,
+                                   int current_branches_number) {
+  print_branches(current_branches_number);
+  char *operation =
+      operation_node.content.operation.type == PARSER_OPERATION_ADDITION
+          ? "addition"
+          : (operation_node.content.operation.type == PARSER_OPERATION_DIVISION
+                 ? "division"
+                 : (operation_node.content.operation.type ==
+                            PARSER_OPERATION_SUBTRACTION
+                        ? "subtraction"
+                        : (operation_node.content.operation.type ==
+                                   PARSER_OPERATION_MULTIPLICATION
+                               ? "multiplication"
+                               : "unknown")));
+  printf(COLORS_YELLOW_BOLD "Operation of type " COLORS_RED_BOLD
+                            "\"%s\"" COLORS_YELLOW_BOLD
+                            ". Sides are:\n" COLORS_RESET,
+         operation);
 }
 
 void parser_debug(Parser *parser) {
