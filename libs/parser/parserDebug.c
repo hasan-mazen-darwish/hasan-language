@@ -51,20 +51,24 @@ const char *get_node_false_value = COLORS_YELLOW_BOLD
 //
 //
 
-void print_number_variable(ParserNode node) {
+static void print_branches(int branches_number_to_print) {
+  printf("\033[0;1;32m");
+  for (int i = 0; i < branches_number_to_print; i++) {
+    printf("-");
+  }
+  printf(COLORS_RESET " ");
+}
+
+static void print_number_variable(ParserNode node,
+                                  int initial_branches_number) {
+  if (initial_branches_number > 1)
+    print_branches(initial_branches_number - 1);
   printf(COLORS_YELLOW_BOLD "Defining a number variable called " COLORS_RED_BOLD
                             "\"%s\"" COLORS_YELLOW_BOLD
                             ". The value attached to it is:\n",
          node.content.numberVariable.identifier);
 
-  unsigned int branches_number = 1, old_branches_number = 1;
-  char *branches = malloc((branches_number + 1) * sizeof(char));
-  if (branches == NULL) {
-    printf("Error allocating memory for the parser debugger's first branch "
-           "char!\n");
-    exit(1);
-  }
-  strcpy(branches, "-");
+  unsigned int branches_number = initial_branches_number;
 
   // This loop will check all the nodes and then print them all together:
   ParserNode *n = malloc(sizeof(ParserNode));
@@ -72,22 +76,7 @@ void print_number_variable(ParserNode node) {
     printf("Error allocating memory for the initial temporary parser node!\n");
     exit(1);
   }
-  int need_to_loop_back = 0;
-
-loop:
-  if (branches_number != old_branches_number) {
-    char *temp = realloc(branches, (branches_number + 1) * sizeof(char));
-    if (temp == NULL) {
-      printf("Error reallocating branches characters for a new branch!\n");
-      free(branches);
-      exit(1);
-    }
-    branches = temp;
-    temp[branches_number - 1] = '-';
-    temp[branches_number] = '\0';
-    old_branches_number = branches_number;
-  }
-
+  printf(""); // Getting rid of the annoying C23 extension warning
   char *debug_text = "(No text defined for this node)";
 
   ParserNode cn = *node.content.numberVariable.value; // Stands for current node
@@ -96,6 +85,10 @@ loop:
   case NODE_NUMBER_VALUE:
     debug_text = get_node_number_value(cn.content.number);
     break;
+  case NODE_NUMBER_VARIABLE:
+    print_number_variable(cn, branches_number + 1);
+    branches_number++;
+    return;
   case NODE_OPERATION:
     printf(""); // To get rid from that annoying "Declaration after label is a
                 // C23 extension" warning
@@ -112,18 +105,14 @@ loop:
              " that has these two nodes:",
              operation);
     branches_number++;
-    need_to_loop_back = 1;
     break;
 
   default:
     break;
   }
 
-  printf("\033[0;1;32m%s " COLORS_YELLOW_BOLD "%s" COLORS_RESET "\n", branches,
-         debug_text);
-  if (need_to_loop_back == 1)
-    goto loop;
-  free(branches);
+  print_branches(branches_number);
+  printf(COLORS_YELLOW_BOLD "%s" COLORS_RESET "\n", debug_text);
 }
 
 void parser_debug(Parser *parser) {
@@ -131,7 +120,7 @@ void parser_debug(Parser *parser) {
     ParserNode node = parser->nodes[i];
     switch (node.type) {
     case NODE_NUMBER_VARIABLE:
-      print_number_variable(node);
+      print_number_variable(node, 1);
       break;
 
     case NODE_STRING_VARIABLE:
