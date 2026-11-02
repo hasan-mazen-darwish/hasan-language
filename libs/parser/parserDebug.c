@@ -105,6 +105,27 @@ static void print_number_variable(ParserNode node,
   printf(COLORS_YELLOW_BOLD "%s" COLORS_RESET "\n", debug_text);
 }
 
+static void number_operation_print_switch_logic(ParserNode n,
+                                                int current_branches_number) {
+  switch (n.type) {
+  case NODE_NUMBER_VARIABLE:
+    print_number_variable(n, current_branches_number);
+    break;
+  case NODE_NUMBER_VALUE:
+    print_branches(current_branches_number);
+    printf("%s\n" COLORS_RESET, get_node_number_value(n.content.number));
+    break;
+  case NODE_OPERATION:
+    number_operation_print(n, current_branches_number);
+    break;
+  default:
+    print_branches(current_branches_number);
+    printf(COLORS_YELLOW_BOLD
+           "Unknown node type given! (not listed)\n" COLORS_RESET);
+    break;
+  }
+}
+
 static void number_operation_print(ParserNode operation_node,
                                    int current_branches_number) {
   print_branches(current_branches_number);
@@ -124,6 +145,18 @@ static void number_operation_print(ParserNode operation_node,
                             "\"%s\"" COLORS_YELLOW_BOLD
                             ". Sides are:\n" COLORS_RESET,
          operation);
+
+  print_branches(current_branches_number);
+  printf(COLORS_YELLOW_BOLD
+         "On the left side of the operation, we have: \n" COLORS_RESET);
+  ParserNode n = *operation_node.content.operation.node1;
+  number_operation_print_switch_logic(n, current_branches_number + 1);
+
+  print_branches(current_branches_number);
+  printf(COLORS_YELLOW_BOLD
+         "On the right side of the operation, we have: \n" COLORS_RESET);
+  n = *operation_node.content.operation.node2;
+  number_operation_print_switch_logic(n, current_branches_number + 1);
 }
 
 void parser_debug(Parser *parser) {
