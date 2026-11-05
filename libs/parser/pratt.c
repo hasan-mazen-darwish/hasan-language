@@ -14,41 +14,43 @@ static double my_strtod(const char *text) {
   return strtod_l(text, NULL, c_locale);
 }
 
-static ParserNode expr_number(int gbp, Token *cursor);
+static ParserNode expr_number(int gbp);
 
-static ParserNode nud_number(Token *cursor) {
-  Token c = *cursor;
+Token *current;
+
+static ParserNode nud_number() {
+  Token c = *current;
   switch (c.type) {
   case DATA_NUMBER:
-    cursor++;
+    current++;
     return (ParserNode){NODE_NUMBER_VALUE, {.number = my_strtod(c.lexeme)}};
   case VARIABLE_NUMBER:
-    cursor++;
+    current++;
     return (ParserNode){NODE_NUMBER_VARIABLE,
                         {.numberVariable = {c.lexeme, NULL}}};
   case SYMBOL_LEFT_PARENTHESIS:
-    cursor++;
-    ParserNode node = expr_number(0, cursor);
-    if (cursor->type != SYMBOL_RIGHT_PARENTHESIS) {
+    current++;
+    ParserNode node = expr_number(0);
+    if (current->type != SYMBOL_RIGHT_PARENTHESIS) {
       printf("Error parsing the source code: At %zu:%zu, it's expected to get "
              "\")\", but got \"%s\".\n",
-             cursor->line, cursor->start, cursor->lexeme);
+             current->line, current->start, current->lexeme);
       exit(1);
     }
-    cursor++;
+    current++;
     return node;
   default:
     printf("Error parsing the source code: Unable to null denotate the token "
            "\"%s\" at %zu:%zu.\n",
-           cursor->lexeme, cursor->line, cursor->start);
+           current->lexeme, current->line, current->start);
     exit(1);
     break;
   }
 }
 
-static ParserNode led_number(ParserNode left, Token *cursor) {
-  TokensTypes currType = cursor->type;
-  cursor++;
+static ParserNode led_number(ParserNode left) {
+  TokensTypes currType = current->type;
+  current++;
   ParserNode *node1 = malloc(sizeof(ParserNode));
   if (node1 == NULL) {
     printf("Unable to allocate memory for the left side of the subtraction "
@@ -65,35 +67,35 @@ static ParserNode led_number(ParserNode left, Token *cursor) {
 
   switch (currType) {
   case SYMBOL_MINUS:
-    node2[0] = expr_number(10, cursor);
+    node2[0] = expr_number(10);
     return (ParserNode){
         NODE_OPERATION,
         {.operation = {PARSER_OPERATION_SUBTRACTION, node1, node2}}};
   case SYMBOL_PLUS:
-    node2[0] = expr_number(10, cursor);
+    node2[0] = expr_number(10);
     return (ParserNode){
         NODE_OPERATION,
         {.operation = {PARSER_OPERATION_ADDITION, node1, node2}}};
   case SYMBOL_ASTERISK:
-    node2[0] = expr_number(20, cursor);
+    node2[0] = expr_number(20);
     return (ParserNode){
         NODE_OPERATION,
         {.operation = {PARSER_OPERATION_MULTIPLICATION, node1, node2}}};
   case SYMBOL_SLASH:
-    node2[0] = expr_number(20, cursor);
+    node2[0] = expr_number(20);
     return (ParserNode){
         NODE_OPERATION,
         {.operation = {PARSER_OPERATION_DIVISION, node1, node2}}};
   default:
     printf("Error parsing the source code: Expected an operation at %zu:%zu, "
            "found \"%s\".\n",
-           cursor->line, cursor->start, cursor->lexeme);
+           current->line, current->start, current->lexeme);
     exit(1);
   }
 }
 
-static int number_bp(Token *cursor) {
-  switch (cursor->type) {
+static int number_bp() {
+  switch (current->type) {
   case SYMBOL_RIGHT_PARENTHESIS:
   case END_OF_LINE:
     return 0;
@@ -106,19 +108,21 @@ static int number_bp(Token *cursor) {
   default:
     printf("Error parsing the source code: Cannot evaluate the binding power "
            "(in number pratt parsing) of the token \"%s\" at %zu:%zu.\n",
-           cursor->lexeme, cursor->line, cursor->start);
+           current->lexeme, current->line, current->start);
     exit(1);
   }
 }
 
 // gbp stands for Given Binding Power
-static ParserNode expr_number(int gbp, Token *cursor) {
-  ParserNode left = nud_number(cursor);
-  while (gbp < number_bp(cursor))
-    left = led_number(left, cursor);
+static ParserNode expr_number(int gbp) {
+  ParserNode left = nud_number();
+  while (gbp < number_bp()) {
+    left = led_number(left);
+  }
   return left;
 }
 
 ParserNode pratt_parsing_numbers(Token *cursor) {
-  return expr_number(0, cursor);
+  current = cursor;
+  return expr_number(0);
 }
