@@ -20,16 +20,53 @@ Token *current;
 
 static ParserNode nud_number() {
   Token c = *current;
+  current++;
   switch (c.type) {
+  case SYMBOL_PLUS:
+    printf(""); // Getting rid of the annoying warning
+    ParserNode *zero_ = malloc(sizeof(ParserNode));
+    if (zero_ == NULL) {
+      printf("Unable to allocate memory for the zero number!\n");
+      exit(1);
+    }
+    zero_[0] = (ParserNode){NODE_NUMBER_VALUE, {.number = 0}};
+
+    ParserNode *expr_ = malloc(sizeof(ParserNode));
+    if (expr_ == NULL) {
+      printf("Unable to allocate memory for the expression after the unary "
+             "minus!\n");
+      exit(1);
+    }
+    expr_[0] = expr_number(10);
+    return (ParserNode){
+        NODE_OPERATION,
+        {.operation = {PARSER_OPERATION_ADDITION, zero_, expr_}}};
+  case SYMBOL_MINUS:
+    printf(""); // Getting rid of the annoying warning
+    ParserNode *zero = malloc(sizeof(ParserNode));
+    if (zero == NULL) {
+      printf("Unable to allocate memory for the zero number!\n");
+      exit(1);
+    }
+    zero[0] = (ParserNode){NODE_NUMBER_VALUE, {.number = 0}};
+
+    ParserNode *expr = malloc(sizeof(ParserNode));
+    if (expr == NULL) {
+      printf("Unable to allocate memory for the expression after the unary "
+             "minus!\n");
+      exit(1);
+    }
+    expr[0] = expr_number(10);
+    return (ParserNode){
+        NODE_OPERATION,
+        {.operation = {PARSER_OPERATION_SUBTRACTION, zero, expr}}};
   case DATA_NUMBER:
-    current++;
     return (ParserNode){NODE_NUMBER_VALUE, {.number = my_strtod(c.lexeme)}};
   case VARIABLE_NUMBER:
-    current++;
     return (ParserNode){NODE_NUMBER_VARIABLE,
                         {.numberVariable = {c.lexeme, NULL}}};
   case SYMBOL_LEFT_PARENTHESIS:
-    current++;
+    printf(""); // To get rid of the annoying warning
     ParserNode node = expr_number(0);
     if (current->type != SYMBOL_RIGHT_PARENTHESIS) {
       printf("Error parsing the source code: At %zu:%zu, it's expected to get "
