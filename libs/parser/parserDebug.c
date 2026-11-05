@@ -160,7 +160,7 @@ static void number_operation_print(ParserNode operation_node,
 }
 
 void parser_debug(Parser *parser) {
-  for (int i = 0; i < parser->nodes_used; i++) {
+  for (size_t i = 0; i < parser->nodes_used; i++) {
     ParserNode node = parser->nodes[i];
     switch (node.type) {
     case NODE_NUMBER_VARIABLE:

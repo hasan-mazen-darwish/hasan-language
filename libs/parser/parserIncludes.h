@@ -3,5 +3,6 @@
 
 #include "./parser.h"
 #include "./parserDebug.h"
+#include "./pratt.h"
 
 #endif // !_PARSER_ALL_LIBS_H
