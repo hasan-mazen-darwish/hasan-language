@@ -40,7 +40,7 @@ static ParserNode nud_number() {
     current++;
     return node;
   default:
-    printf("Error parsing the source code: Unable to null denotate the token "
+    printf("Error parsing the source code: Unexpected token "
            "\"%s\" at %zu:%zu.\n",
            current->lexeme, current->line, current->start);
     exit(1);
@@ -106,9 +106,9 @@ static int number_bp() {
   case SYMBOL_SLASH:
     return 20;
   default:
-    printf("Error parsing the source code: Cannot evaluate the binding power "
-           "(in number pratt parsing) of the token \"%s\" at %zu:%zu.\n",
-           current->lexeme, current->line, current->start);
+    printf(
+        "Error parsing the source code: Unexpected token \"%s\" at %zu:%zu.\n",
+        current->lexeme, current->line, current->start);
     exit(1);
   }
 }
@@ -116,9 +116,8 @@ static int number_bp() {
 // gbp stands for Given Binding Power
 static ParserNode expr_number(int gbp) {
   ParserNode left = nud_number();
-  while (gbp < number_bp()) {
+  while (gbp < number_bp())
     left = led_number(left);
-  }
   return left;
 }
 
