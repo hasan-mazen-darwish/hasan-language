@@ -19,7 +19,10 @@ compiled/parser.o: libs/parser/parser.c libs/parser/parser.h
 compiled/parserDebug.o: libs/parser/parserDebug.c libs/parser/parserDebug.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o compiled/parser.o compiled/parserDebug.o
+compiled/pratt.o: libs/parser/pratt.c libs/parser/pratt.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o compiled/parser.o compiled/parserDebug.o compiled/pratt.o
 	$(CC) $^ -o $@
 
 clean:
