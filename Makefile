@@ -13,6 +13,9 @@ compiled/main.o: main.c libs/includes.h
 compiled/hashmap.o: libs/utils/hashmap.c libs/utils/hashmap.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+compiled/debug-tree.o: libs/utils/debug-tree.c libs/utils/debug-tree.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
 compiled/parser.o: libs/parser/parser.c libs/parser/parser.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -22,7 +25,7 @@ compiled/parserDebug.o: libs/parser/parserDebug.c libs/parser/parserDebug.h
 compiled/pratt.o: libs/parser/pratt.c libs/parser/pratt.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o compiled/parser.o compiled/parserDebug.o compiled/pratt.o
+app: compiled/lexer.o compiled/lexerDebug.o compiled/main.o compiled/hashmap.o compiled/parser.o compiled/parserDebug.o compiled/pratt.o compiled/debug-tree.o
 	$(CC) $^ -o $@
 
 clean:
