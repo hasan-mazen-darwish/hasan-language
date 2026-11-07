@@ -218,7 +218,25 @@ static ParserNode nud() {
              current_parameters[i].type ==
                  PRATT_PARAMETER_TYPE_EXPRESSION_STARTER) {
       current_cursor++;
-      return expr(0);
+      ParserNode e = expr(0);
+
+      int n = 0;
+      for (int j = 0; j < current_parameters_number; j++) {
+        if (current_cursor->type == END_OF_LINE)
+          n = 1;
+        if (current_parameters[j].type == PRATT_PARAMETER_TYPE_TERMINATOR &&
+            current_cursor->type == current_parameters[j].token_type)
+          n = 1;
+
+        if (n == 1)
+          break;
+      }
+      if (n == 0) {
+        led_e(*current_cursor);
+        exit(1);
+      }
+      current_cursor++;
+      return e;
     }
   }
 
