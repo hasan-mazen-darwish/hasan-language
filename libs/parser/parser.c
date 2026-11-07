@@ -157,7 +157,7 @@ static int add_boolean_variable_value(Parser *parser, char *name, int value) {
 // this function. This fucntion only returns the status code.
 static int add_number_variable_from_cursor(Parser *parser, char *varName,
                                            Token *cursor) {
-  ParserNode node_value = pratt_parsing_numbers_generalized(cursor);
+  ParserNode node_value = pratt_parsing_numbers(cursor);
   ParserNode *nv = malloc(sizeof(ParserNode));
   if (nv == NULL) {
     printf("Error allocating memory for the variable \"%s\"!\n", varName);
