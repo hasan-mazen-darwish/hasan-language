@@ -3,7 +3,7 @@ number a1
 string text
 truth boolean
 number b = +5.01 - 3
-number c = (1 + 2)) * 3 - 4 * 5
+number c = (1 + 2) * 3 - 4 * 5
 
 // Printing the sum of the two variables:
 print with a1 + b
