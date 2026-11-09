@@ -14,7 +14,7 @@ DebugTree dt_create(int identation) {
   return (DebugTree){identation, branches, 0, DT_DEFAULT_BRANCHES_MALLOC_SIZE};
 }
 
-DebugTree dt_get_default() { return dt_create(2); }
+DebugTree dt_get_default() { return dt_create(1); }
 
 void dt_clean(DebugTree *dt) {
   if (dt->branches != NULL) {
