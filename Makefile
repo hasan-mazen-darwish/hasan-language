@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c11 -g -O2
+CFLAGS := -Wall -Wextra -g -O2
 
 compiled/lexer.o: libs/lexer/lexer.c libs/lexer/lexer.h
 	$(CC) $(CFLAGS) -c $< -o $@
