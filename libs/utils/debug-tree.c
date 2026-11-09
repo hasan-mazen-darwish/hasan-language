@@ -58,9 +58,21 @@ static void extend_branches_if_needed(DebugTree *dt) {
 void dt_add_branch(DebugTree *dt, int depth, char *text) {
   extend_branches_if_needed(dt);
   dt->branches[dt->branches_number].depth = depth;
-  dt->branches[dt->branches_number].text = text;
+  dt->branches[dt->branches_number].text = strdup(text);
   dt->branches_number++;
   return;
+}
+
+static void print_identations(int n) {
+  for (int i = 0; i < n; i++) {
+    printf(" ");
+  }
+}
+
+static void print_branches(int n) {
+  for (int i = 0; i < n; i++) {
+    printf(DT_H_LINE);
+  }
 }
 
 void dt_print(DebugTree *dt) {
@@ -69,12 +81,19 @@ void dt_print(DebugTree *dt) {
     if (cur_dep == 0)
       printf("%s\n", dt->branches[i].text);
     else {
-      for (int d = 1; d < cur_dep; d++)
+      for (int d = 1; d < cur_dep; d++) {
         printf(DT_BOLD_GREEN DT_V_LINE DT_COLORS_RESET);
+        print_identations(dt->identation);
+      }
       if (i == dt->branches_number - 1 || dt->branches[i + 1].depth < cur_dep)
-        printf(DT_BOLD_GREEN DT_LAST_BRANCH DT_COLORS_RESET);
+        printf(DT_BOLD_GREEN DT_LAST_BRANCH);
       else
-        printf(DT_BOLD_GREEN DT_BRANCH DT_COLORS_RESET);
+        printf(DT_BOLD_GREEN DT_BRANCH);
+      print_branches(dt->identation);
+      printf(DT_COLORS_RESET);
+      printf("%s\n", dt->branches[i].text);
+      free(dt->branches[i].text);
     }
   }
+  free(dt->branches);
 }

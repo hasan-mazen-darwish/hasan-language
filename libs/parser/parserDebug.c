@@ -63,7 +63,7 @@ static void print_number_variable(ParserNode node,
   char text[1025];
   snprintf(text, 1025,
            "%sDefining a number variable called %s"
-           "\"%s\"%s. The value attached to it is:\n",
+           "\"%s\"%s. The value attached to it is:",
            COLORS_YELLOW_BOLD, COLORS_RED_BOLD,
            node.content.numberVariable.identifier, COLORS_YELLOW_BOLD);
 
@@ -76,7 +76,6 @@ static void print_number_variable(ParserNode node,
     printf("Error allocating memory for the initial temporary parser node!\n");
     exit(1);
   }
-  printf(""); // Getting rid of the annoying C23 extension warning
   char *debug_text = "(No text defined for this node)";
 
   ParserNode cn = *node.content.numberVariable.value; // Stands for current node
@@ -84,6 +83,7 @@ static void print_number_variable(ParserNode node,
   switch (cn.type) {
   case NODE_NUMBER_VALUE:
     debug_text = get_node_number_value(cn.content.number);
+    branches_number++;
     break;
   case NODE_NUMBER_VARIABLE:
     print_number_variable(cn, branches_number + 1);
@@ -97,8 +97,7 @@ static void print_number_variable(ParserNode node,
     break;
   }
 
-  snprintf(text, 1025, "%s%s%s\n", COLORS_YELLOW_BOLD, debug_text,
-           COLORS_RESET);
+  snprintf(text, 1025, "%s%s%s", COLORS_YELLOW_BOLD, debug_text, COLORS_RESET);
   dt_add_branch(tree, branches_number, text);
 }
 
@@ -110,8 +109,7 @@ static void number_operation_print_switch_logic(ParserNode n,
     print_number_variable(n, current_branches_number);
     break;
   case NODE_NUMBER_VALUE:
-    printf(""); // Getting rid of the annoying warning
-    snprintf(text, 1025, "%s%s\n", get_node_number_value(n.content.number),
+    snprintf(text, 1025, "%s%s", get_node_number_value(n.content.number),
              COLORS_RESET);
     dt_add_branch(tree, current_branches_number, text);
     break;
@@ -119,8 +117,7 @@ static void number_operation_print_switch_logic(ParserNode n,
     number_operation_print(n, current_branches_number);
     break;
   default:
-    printf("");
-    snprintf(text, 1025, "%sUnknown node type given! (not listed)\n%s",
+    snprintf(text, 1025, "%sUnknown node type given! (not listed)%s",
              COLORS_YELLOW_BOLD, COLORS_RESET);
     dt_add_branch(tree, current_branches_number, text);
     break;
@@ -142,22 +139,22 @@ static void number_operation_print(ParserNode operation_node,
                                    PARSER_OPERATION_MULTIPLICATION
                                ? "multiplication"
                                : "unknown")));
-  snprintf(text, 1025, "%sOperation of type %s\"%s\"%s. Sides are:\n%s",
-           COLORS_YELLOW_BOLD, COLORS_RED_BOLD, COLORS_YELLOW_BOLD,
-           COLORS_RESET, operation);
+  snprintf(text, 1025, "%sOperation of type %s\"%s\"%s. Sides are:%s",
+           COLORS_YELLOW_BOLD, COLORS_RED_BOLD, operation, COLORS_YELLOW_BOLD,
+           COLORS_RESET);
   dt_add_branch(tree, current_branches_number, text);
 
-  snprintf(text, 1025, "%sOn the left side of the operation, we have: \n%s",
+  snprintf(text, 1025, "%sOn the left side of the operation, we have:%s",
            COLORS_YELLOW_BOLD, COLORS_RESET);
-  dt_add_branch(tree, current_branches_number, text);
+  dt_add_branch(tree, current_branches_number + 1, text);
   ParserNode n = *operation_node.content.operation.node1;
-  number_operation_print_switch_logic(n, current_branches_number + 1);
+  number_operation_print_switch_logic(n, current_branches_number + 2);
 
-  snprintf(text, 1025, "%sOn the right side of the operation, we have: \n%s",
+  snprintf(text, 1025, "%sOn the right side of the operation, we have:%s",
            COLORS_YELLOW_BOLD, COLORS_RESET);
-  dt_add_branch(tree, current_branches_number, text);
+  dt_add_branch(tree, current_branches_number + 1, text);
   n = *operation_node.content.operation.node2;
-  number_operation_print_switch_logic(n, current_branches_number + 1);
+  number_operation_print_switch_logic(n, current_branches_number + 2);
 }
 
 void parser_debug(Parser *parser) {
@@ -168,54 +165,67 @@ void parser_debug(Parser *parser) {
     exit(1);
   }
   *tree = dt_get_default();
+  char text[1025];
   for (size_t i = 0; i < parser->nodes_used; i++) {
     ParserNode node = parser->nodes[i];
     switch (node.type) {
     case NODE_NUMBER_VARIABLE:
-      print_number_variable(node, 1);
+      print_number_variable(node, 0);
       break;
 
     case NODE_STRING_VARIABLE:
-      printf(COLORS_YELLOW_BOLD
-             "Defining a string variable named " COLORS_RED_BOLD
-             "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
-             "\"%s\"" COLORS_YELLOW_BOLD "." COLORS_RESET,
-             node.content.stringVariable.identifier,
-             // TODO: change this temporary glue
-             node.content.stringVariable.value->content.string);
+      snprintf(text, 1025,
+               COLORS_YELLOW_BOLD
+               "Defining a string variable named " COLORS_RED_BOLD
+               "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
+               "\"%s\"" COLORS_YELLOW_BOLD "." COLORS_RESET,
+               node.content.stringVariable.identifier,
+               // TODO: change this temporary glue
+               node.content.stringVariable.value->content.string);
+      dt_add_branch(tree, 0, text);
       break;
 
     case NODE_BOOLEAN_VARIABLE:
-      printf(COLORS_YELLOW_BOLD
-             "Defining a truth (boolean) variable named " COLORS_RED_BOLD
-             "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
-             "%s" COLORS_YELLOW_BOLD "." COLORS_RESET,
-             node.content.booleanVariable.identifier,
-             // TODO: change this temporary glue
-             node.content.booleanVariable.value->content.boolean <= 0 ? "false"
-                                                                      : "true");
+      snprintf(text, 1025,
+               COLORS_YELLOW_BOLD
+               "Defining a truth (boolean) variable named " COLORS_RED_BOLD
+               "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
+               "%s" COLORS_YELLOW_BOLD "." COLORS_RESET,
+               node.content.booleanVariable.identifier,
+               // TODO: change this temporary glue
+               node.content.booleanVariable.value->content.boolean <= 0
+                   ? "false"
+                   : "true");
+      dt_add_branch(tree, 0, text);
       break;
 
     case NODE_NUMBER_VALUE:
-      printf("%s\n", get_node_number_value(node.content.number));
+      snprintf(text, 1025, "%s", get_node_number_value(node.content.number));
+      dt_add_branch(tree, 0, text);
       break;
 
     case NODE_STRING_VALUE:
-      printf("%s\n", get_node_string_value(node.content.string));
+      snprintf(text, 1025, "%s", get_node_string_value(node.content.string));
+      dt_add_branch(tree, 0, text);
       break;
 
     case NODE_TRUE_VALUE:
-      printf("%s\n", get_node_true_value);
+      snprintf(text, 1025, "%s", get_node_true_value);
+      dt_add_branch(tree, 0, text);
       break;
 
     case NODE_FALSE_VALUE:
-      printf("%s\n", get_node_false_value);
+      snprintf(text, 1025, "%s", get_node_false_value);
+      dt_add_branch(tree, 0, text);
       break;
 
     case NODE_OPERATION:
-      printf("An operation got detected! (still debugging not handled)\n");
+      snprintf(text, 1025,
+               "An operation got detected! (still debugging not handled)");
+      dt_add_branch(tree, 0, text);
       break;
     }
-    printf("\n");
+    dt_add_branch(tree, 0, "\n");
   }
+  dt_print(tree);
 }
