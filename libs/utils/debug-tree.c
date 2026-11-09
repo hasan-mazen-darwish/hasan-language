@@ -38,12 +38,13 @@ static void extend_branches_if_needed(DebugTree *dt) {
 
   size_t size;
   if (dt->branches_size <= 0)
-    size = DT_DEFAULT_BRANCHES_MALLOC_SIZE * sizeof(DebugTreeBranch);
+    size = DT_DEFAULT_BRANCHES_MALLOC_SIZE;
   else
     size = dt->branches_size * 2;
 
   if (dt->branches_number >= dt->branches_size) {
-    DebugTreeBranch *temp = realloc(dt->branches, size);
+    DebugTreeBranch *temp =
+        realloc(dt->branches, size * sizeof(DebugTreeBranch));
     if (temp == NULL) {
       printf("Error extending the branches of the debugging tree: failed "
              "reallocating new memory for them!\n");

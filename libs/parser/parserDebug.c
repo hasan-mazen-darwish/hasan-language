@@ -1,8 +1,11 @@
 #include "./parserDebug.h"
+#include "../utils/debug-tree.h"
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+DebugTree *tree;
 
 #define COLORS_YELLOW_BOLD "\033[0;1;33m"
 #define COLORS_RED_BOLD "\033[0;1;31m"
@@ -51,28 +54,21 @@ const char *get_node_false_value = COLORS_YELLOW_BOLD
 //
 //
 
-static void print_branches(int branches_number_to_print) {
-  printf("\033[0;1;32m");
-  for (int i = 0; i < branches_number_to_print; i++) {
-    printf("-");
-  }
-  printf(COLORS_RESET " ");
-}
-
 // Helper functions for the print_number_variable function:
 static void number_operation_print(ParserNode operation_node,
                                    int current_branches_number);
 
 static void print_number_variable(ParserNode node,
                                   int initial_branches_number) {
-  if (initial_branches_number > 1)
-    print_branches(initial_branches_number - 1);
-  printf(COLORS_YELLOW_BOLD "Defining a number variable called " COLORS_RED_BOLD
-                            "\"%s\"" COLORS_YELLOW_BOLD
-                            ". The value attached to it is:\n",
-         node.content.numberVariable.identifier);
+  char text[1025];
+  snprintf(text, 1025,
+           "%sDefining a number variable called %s"
+           "\"%s\"%s. The value attached to it is:\n",
+           COLORS_YELLOW_BOLD, COLORS_RED_BOLD,
+           node.content.numberVariable.identifier, COLORS_YELLOW_BOLD);
 
   unsigned int branches_number = initial_branches_number;
+  dt_add_branch(tree, branches_number, text);
 
   // This loop will check all the nodes and then print them all together:
   ParserNode *n = malloc(sizeof(ParserNode));
@@ -101,34 +97,39 @@ static void print_number_variable(ParserNode node,
     break;
   }
 
-  print_branches(branches_number);
-  printf(COLORS_YELLOW_BOLD "%s" COLORS_RESET "\n", debug_text);
+  snprintf(text, 1025, "%s%s%s\n", COLORS_YELLOW_BOLD, debug_text,
+           COLORS_RESET);
+  dt_add_branch(tree, branches_number, text);
 }
 
 static void number_operation_print_switch_logic(ParserNode n,
                                                 int current_branches_number) {
+  char text[1025];
   switch (n.type) {
   case NODE_NUMBER_VARIABLE:
     print_number_variable(n, current_branches_number);
     break;
   case NODE_NUMBER_VALUE:
-    print_branches(current_branches_number);
-    printf("%s\n" COLORS_RESET, get_node_number_value(n.content.number));
+    printf(""); // Getting rid of the annoying warning
+    snprintf(text, 1025, "%s%s\n", get_node_number_value(n.content.number),
+             COLORS_RESET);
+    dt_add_branch(tree, current_branches_number, text);
     break;
   case NODE_OPERATION:
     number_operation_print(n, current_branches_number);
     break;
   default:
-    print_branches(current_branches_number);
-    printf(COLORS_YELLOW_BOLD
-           "Unknown node type given! (not listed)\n" COLORS_RESET);
+    printf("");
+    snprintf(text, 1025, "%sUnknown node type given! (not listed)\n%s",
+             COLORS_YELLOW_BOLD, COLORS_RESET);
+    dt_add_branch(tree, current_branches_number, text);
     break;
   }
 }
 
 static void number_operation_print(ParserNode operation_node,
                                    int current_branches_number) {
-  print_branches(current_branches_number);
+  char text[1025];
   char *operation =
       operation_node.content.operation.type == PARSER_OPERATION_ADDITION
           ? "addition"
@@ -141,25 +142,32 @@ static void number_operation_print(ParserNode operation_node,
                                    PARSER_OPERATION_MULTIPLICATION
                                ? "multiplication"
                                : "unknown")));
-  printf(COLORS_YELLOW_BOLD "Operation of type " COLORS_RED_BOLD
-                            "\"%s\"" COLORS_YELLOW_BOLD
-                            ". Sides are:\n" COLORS_RESET,
-         operation);
+  snprintf(text, 1025, "%sOperation of type %s\"%s\"%s. Sides are:\n%s",
+           COLORS_YELLOW_BOLD, COLORS_RED_BOLD, COLORS_YELLOW_BOLD,
+           COLORS_RESET, operation);
+  dt_add_branch(tree, current_branches_number, text);
 
-  print_branches(current_branches_number);
-  printf(COLORS_YELLOW_BOLD
-         "On the left side of the operation, we have: \n" COLORS_RESET);
+  snprintf(text, 1025, "%sOn the left side of the operation, we have: \n%s",
+           COLORS_YELLOW_BOLD, COLORS_RESET);
+  dt_add_branch(tree, current_branches_number, text);
   ParserNode n = *operation_node.content.operation.node1;
   number_operation_print_switch_logic(n, current_branches_number + 1);
 
-  print_branches(current_branches_number);
-  printf(COLORS_YELLOW_BOLD
-         "On the right side of the operation, we have: \n" COLORS_RESET);
+  snprintf(text, 1025, "%sOn the right side of the operation, we have: \n%s",
+           COLORS_YELLOW_BOLD, COLORS_RESET);
+  dt_add_branch(tree, current_branches_number, text);
   n = *operation_node.content.operation.node2;
   number_operation_print_switch_logic(n, current_branches_number + 1);
 }
 
 void parser_debug(Parser *parser) {
+  tree = malloc(sizeof(DebugTree));
+  if (tree == NULL) {
+    printf("Error allocating memory for the debugging tree of the parser!");
+    parser_clean(parser);
+    exit(1);
+  }
+  *tree = dt_get_default();
   for (size_t i = 0; i < parser->nodes_used; i++) {
     ParserNode node = parser->nodes[i];
     switch (node.type) {
