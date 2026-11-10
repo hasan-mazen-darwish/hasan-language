@@ -283,3 +283,87 @@ ParserNode pratt_parsing_numbers(Token *cursor) {
                        &number_nud_error_function, &number_led_error_function,
                        &number_bp_error_function);
 }
+
+// Strings pratt parser:
+// --- Error Functions ---
+void string_nud_error_function(Token token) {
+  printf("Error parsing the source code: Unexpected token "
+         "\"%s\" at %zu:%zu.\n",
+         token.lexeme, token.line, token.start);
+}
+
+void string_led_error_function(Token token) {
+  printf(
+      "Error parsing the source code: Expected a string operation at %zu:%zu, "
+      "found \"%s\".\n",
+      token.line, token.start, token.lexeme);
+}
+
+void string_bp_error_function(Token token) {
+  printf("Error parsing the source code: Unexpected token \"%s\" at %zu:%zu.\n",
+         token.lexeme, token.line, token.start);
+}
+
+// --- Nudders ---
+ParserNode s_string_nudder(Token token) {
+  return (ParserNode){NODE_STRING_VALUE, {.string = token.lexeme}};
+}
+
+ParserNode s_string_variable_nudder(Token token) {
+  return (ParserNode){NODE_STRING_VARIABLE,
+                      {.stringVariable = {token.lexeme, NULL}}};
+}
+
+// --- Ledders ---
+ParserNode s_addition_ledder(ParserNode left, ParserNode right, Token token) {
+  ParserNode *l = malloc(sizeof(ParserNode));
+  if (l == NULL) {
+    printf("Error allocating new memory for the left side of the string "
+           "addition!\n");
+    exit(1);
+  }
+  *l = left;
+  ParserNode *r = malloc(sizeof(ParserNode));
+  if (r == NULL) {
+    printf("Error allocating new memory for the right side of the string "
+           "addition!\n");
+    exit(1);
+  }
+  *r = right;
+
+  return (ParserNode){NODE_OPERATION,
+                      {.operation = {PARSER_OPERATION_ADDITION, l, r}}};
+}
+
+// --- Main Function ---
+ParserNode pratt_parsing_strings(Token *cursor) {
+  int parameters_number = 5;
+  PrattParameter *parameters =
+      malloc(parameters_number * sizeof(PrattParameter));
+  if (parameters == NULL) {
+    printf("Error allocating memory for the parameters of the pratt parser of "
+           "the strings!\n");
+    exit(1);
+  }
+
+  // String values
+  parameters[0] = (PrattParameter){PRATT_PARAMETER_TYPE_ALLOWED, DATA_STRING,
+                                   &s_string_nudder, NULL, 0};
+  parameters[1] =
+      (PrattParameter){PRATT_PARAMETER_TYPE_ALLOWED, VARIABLE_STRING,
+                       &s_string_variable_nudder, NULL, 0};
+
+  // Brackets
+  parameters[2] = (PrattParameter){PRATT_PARAMETER_TYPE_EXPRESSION_STARTER,
+                                   SYMBOL_LEFT_PARENTHESIS, NULL, NULL, 0};
+  parameters[3] = (PrattParameter){PRATT_PARAMETER_TYPE_TERMINATOR,
+                                   SYMBOL_RIGHT_PARENTHESIS, NULL, NULL, 0};
+
+  // Addition operation
+  parameters[4] = (PrattParameter){PRATT_PARAMETER_TYPE_OPERATION, SYMBOL_PLUS,
+                                   NULL, &s_addition_ledder, 10};
+
+  return pratt_parsing(cursor, parameters, parameters_number,
+                       &string_nud_error_function, &string_led_error_function,
+                       &string_bp_error_function);
+}

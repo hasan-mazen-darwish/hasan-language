@@ -26,6 +26,7 @@ typedef struct PrattParameter {
 } PrattParameter;
 
 ParserNode pratt_parsing_numbers(Token *cursor);
+ParserNode pratt_parsing_strings(Token *cursor);
 ParserNode pratt_parsing(Token *cursor, PrattParameter *parameters,
                          int parameters_number,
                          ErrorFunction nud_error_function,
