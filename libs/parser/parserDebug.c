@@ -62,10 +62,10 @@ static void print_number_variable(ParserNode node,
                                   int initial_branches_number) {
   char text[1025];
   snprintf(text, 1025,
-           "%sDefining a number variable called %s"
-           "\"%s\"%s. The value attached to it is:",
-           COLORS_YELLOW_BOLD, COLORS_RED_BOLD,
-           node.content.numberVariable.identifier, COLORS_YELLOW_BOLD);
+           COLORS_YELLOW_BOLD
+           "Defining a number variable called " COLORS_RED_BOLD
+           "\"%s\"" COLORS_YELLOW_BOLD ". The value attached to it is:",
+           node.content.numberVariable.identifier);
 
   unsigned int branches_number = initial_branches_number;
   dt_add_branch(tree, branches_number, text);
@@ -109,16 +109,17 @@ static void number_operation_print_switch_logic(ParserNode n,
     print_number_variable(n, current_branches_number);
     break;
   case NODE_NUMBER_VALUE:
-    snprintf(text, 1025, "%s%s", get_node_number_value(n.content.number),
-             COLORS_RESET);
+    snprintf(text, 1025, "%s" COLORS_RESET,
+             get_node_number_value(n.content.number));
     dt_add_branch(tree, current_branches_number, text);
     break;
   case NODE_OPERATION:
     number_operation_print(n, current_branches_number);
     break;
   default:
-    snprintf(text, 1025, "%sUnknown node type given! (not listed)%s",
-             COLORS_YELLOW_BOLD, COLORS_RESET);
+    snprintf(text, 1025,
+             COLORS_YELLOW_BOLD
+             "Unknown node type given! (not listed)" COLORS_RESET);
     dt_add_branch(tree, current_branches_number, text);
     break;
   }
@@ -139,19 +140,23 @@ static void number_operation_print(ParserNode operation_node,
                                    PARSER_OPERATION_MULTIPLICATION
                                ? "multiplication"
                                : "unknown")));
-  snprintf(text, 1025, "%sOperation of type %s\"%s\"%s. Sides are:%s",
-           COLORS_YELLOW_BOLD, COLORS_RED_BOLD, operation, COLORS_YELLOW_BOLD,
-           COLORS_RESET);
+  snprintf(text, 1025,
+           COLORS_YELLOW_BOLD "Operation of type " COLORS_RED_BOLD
+                              "\"%s\"" COLORS_YELLOW_BOLD
+                              ". Sides are:" COLORS_RESET,
+           operation);
   dt_add_branch(tree, current_branches_number, text);
 
-  snprintf(text, 1025, "%sOn the left side of the operation, we have:%s",
-           COLORS_YELLOW_BOLD, COLORS_RESET);
+  snprintf(text, 1025,
+           COLORS_YELLOW_BOLD
+           "On the left side of the operation, we have:" COLORS_RESET);
   dt_add_branch(tree, current_branches_number + 1, text);
   ParserNode n = *operation_node.content.operation.node1;
   number_operation_print_switch_logic(n, current_branches_number + 2);
 
-  snprintf(text, 1025, "%sOn the right side of the operation, we have:%s",
-           COLORS_YELLOW_BOLD, COLORS_RESET);
+  snprintf(text, 1025,
+           COLORS_YELLOW_BOLD
+           "On the right side of the operation, we have:" COLORS_RESET);
   dt_add_branch(tree, current_branches_number + 1, text);
   n = *operation_node.content.operation.node2;
   number_operation_print_switch_logic(n, current_branches_number + 2);
