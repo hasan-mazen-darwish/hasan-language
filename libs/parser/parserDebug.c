@@ -29,14 +29,14 @@ static char *get_node_number_value(double number) {
 
 static char *get_node_string_value(char *string) {
   const char *format =
-      COLORS_YELLOW_BOLD "A number value of " COLORS_RED_BOLD
-                         "%s" COLORS_YELLOW_BOLD "." COLORS_RESET;
-  size_t size = strlen(format) + 20;
+      COLORS_YELLOW_BOLD "A string value of " COLORS_RED_BOLD
+                         "\"%s\"" COLORS_YELLOW_BOLD "." COLORS_RESET;
+  size_t size = strlen(format) + strlen(string) + 20;
   char *result = malloc(size * sizeof(char));
   if (result == NULL) {
     printf(
         COLORS_RESET
-        "\n\nError allocating memory for the node number value debugging!\n\n");
+        "\n\nError allocating memory for the node string value debugging!\n\n");
     exit(1);
   }
   snprintf(result, size, format, string);
@@ -64,20 +64,14 @@ static void print_number_variable(ParserNode node,
   snprintf(text, 1025,
            COLORS_YELLOW_BOLD
            "Defining a number variable called " COLORS_RED_BOLD
-           "\"%s\"" COLORS_YELLOW_BOLD ". The value attached to it is:",
+           "\"%s\"" COLORS_YELLOW_BOLD
+           ". The value attached to it is:" COLORS_RESET,
            node.content.numberVariable.identifier);
 
   unsigned int branches_number = initial_branches_number;
   dt_add_branch(tree, branches_number, text);
 
-  // This loop will check all the nodes and then print them all together:
-  ParserNode *n = malloc(sizeof(ParserNode));
-  if (n == NULL) {
-    printf("Error allocating memory for the initial temporary parser node!\n");
-    exit(1);
-  }
   char *debug_text = "(No text defined for this node)";
-
   ParserNode cn = *node.content.numberVariable.value; // Stands for current node
 
   switch (cn.type) {
@@ -97,7 +91,7 @@ static void print_number_variable(ParserNode node,
     break;
   }
 
-  snprintf(text, 1025, "%s%s%s", COLORS_YELLOW_BOLD, debug_text, COLORS_RESET);
+  snprintf(text, 1025, COLORS_YELLOW_BOLD "%s" COLORS_RESET, debug_text);
   dt_add_branch(tree, branches_number, text);
 }
 
@@ -162,6 +156,82 @@ static void number_operation_print(ParserNode operation_node,
   number_operation_print_switch_logic(n, current_branches_number + 2);
 }
 
+// Strings debugger:
+
+static void string_operation_print(ParserNode operation_node,
+                                   int current_branches_number);
+
+static void print_string_variable(ParserNode node,
+                                  int initial_branches_number) {
+  char text[1025];
+  snprintf(text, 1025,
+           COLORS_YELLOW_BOLD
+           "Defining a string variable named " COLORS_RED_BOLD
+           "\"%s\"" COLORS_YELLOW_BOLD
+           ". The value attached to it is:" COLORS_RESET,
+           node.content.stringVariable.identifier);
+  int branches_number = initial_branches_number;
+  dt_add_branch(tree, branches_number, text);
+
+  char *debug_text = "(No text defined for this node)";
+  ParserNode cn = *node.content.stringVariable.value; // cn = curent node
+
+  switch (cn.type) {
+  case NODE_STRING_VALUE:
+    debug_text = get_node_string_value(cn.content.string);
+    branches_number++;
+    break;
+  case NODE_STRING_VARIABLE:
+    branches_number++;
+    print_string_variable(cn, branches_number);
+    break;
+  case NODE_OPERATION:
+    string_operation_print(cn, branches_number);
+    break;
+  default:
+    break;
+  }
+  snprintf(text, 1025, COLORS_YELLOW_BOLD "%s" COLORS_RESET, debug_text);
+  dt_add_branch(tree, branches_number, text);
+}
+
+static void string_operation_print_switch_logic(ParserNode n,
+                                                int current_branches_number) {
+  char text[1025];
+  switch (n.type) {
+  case NODE_STRING_VARIABLE:
+    print_string_variable(n, current_branches_number);
+    break;
+  case NODE_STRING_VALUE:
+    snprintf(text, 1025, "%s" COLORS_RESET,
+             get_node_string_value(n.content.string));
+    dt_add_branch(tree, current_branches_number, text);
+    break;
+  case NODE_OPERATION:
+    string_operation_print(n, current_branches_number);
+    break;
+  default:
+    snprintf(text, 1025,
+             COLORS_YELLOW_BOLD
+             "Unknown node type given! (not listed)" COLORS_RESET);
+    dt_add_branch(tree, current_branches_number, text);
+    break;
+  }
+}
+
+void string_operation_print(ParserNode operation_node,
+                            int current_branches_number) {
+  char text[1025];
+  snprintf(text, 1025,
+           COLORS_YELLOW_BOLD "A string addition between:" COLORS_RESET);
+  dt_add_branch(tree, current_branches_number, text);
+
+  string_operation_print_switch_logic(*operation_node.content.operation.node1,
+                                      current_branches_number + 1);
+  string_operation_print_switch_logic(*operation_node.content.operation.node2,
+                                      current_branches_number + 1);
+}
+
 void parser_debug(Parser *parser) {
   tree = malloc(sizeof(DebugTree));
   if (tree == NULL) {
@@ -176,18 +246,12 @@ void parser_debug(Parser *parser) {
     switch (node.type) {
     case NODE_NUMBER_VARIABLE:
       print_number_variable(node, 0);
+      dt_add_branch(tree, 0, "\n");
       break;
 
     case NODE_STRING_VARIABLE:
-      snprintf(text, 1025,
-               COLORS_YELLOW_BOLD
-               "Defining a string variable named " COLORS_RED_BOLD
-               "%s" COLORS_YELLOW_BOLD " with the value " COLORS_RED_BOLD
-               "\"%s\"" COLORS_YELLOW_BOLD "." COLORS_RESET,
-               node.content.stringVariable.identifier,
-               // TODO: change this temporary glue
-               node.content.stringVariable.value->content.string);
-      dt_add_branch(tree, 0, text);
+      print_string_variable(node, 0);
+      dt_add_branch(tree, 0, "\n");
       break;
 
     case NODE_BOOLEAN_VARIABLE:
@@ -230,7 +294,6 @@ void parser_debug(Parser *parser) {
       dt_add_branch(tree, 0, text);
       break;
     }
-    dt_add_branch(tree, 0, "\n");
   }
   dt_print(tree);
 }
