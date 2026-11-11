@@ -171,6 +171,22 @@ static int add_number_variable_from_cursor(Parser *parser, char *varName,
   return 1;
 }
 
+static int add_string_variable_from_cursor(Parser *parser, char *varName,
+                                           Token *cursor) {
+  ParserNode node_value = pratt_parsing_strings(cursor);
+  ParserNode *nv = malloc(sizeof(ParserNode));
+  if (nv == NULL) {
+    printf("Error allocating memory for the variable \"%s\"!\n", varName);
+    return 0;
+  }
+  nv[0] = node_value;
+
+  ParserNode node =
+      (ParserNode){NODE_STRING_VARIABLE, {.stringVariable = {varName, nv}}};
+  add_node_to_parser(parser, node);
+  return 1;
+}
+
 //
 //
 //
@@ -268,6 +284,7 @@ Parser *parser_parse(Parser *parser) {
           i -= add_number_variable_from_cursor(parser, varName, cursor);
           break;
         case VARIABLE_STRING:
+          i -= add_string_variable_from_cursor(parser, varName, cursor);
           break;
         case VARIABLE_BOOLEAN:
           break;
