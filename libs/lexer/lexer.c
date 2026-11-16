@@ -513,10 +513,11 @@ Lexer *lexer_tokenify(Lexer *lexer) {
 
       p++;
       isString = isString == 0 ? 1 : 0;
+      continue;
     }
 
-    if (isspace((unsigned char)*p) != 0 && (lLength == 0 || isString == 0) &&
-        isComment == 0) {
+    if (isspace((unsigned char)*p) != 0 &&
+        ((lLength == 0 && isString == 0) || isString == 0) && isComment == 0) {
       // This either detects whitespaces in the beginning of the text or the
       // whitespaces after the non-string tokens, and it must be not in a
       // comment
