@@ -1,6 +1,9 @@
 // Defining two numbers:
 number a1
-string text
+string t = "  hello world"
+string l = ""
+string m = "hello " + " world"
+
 truth boolean
 number b = +5.01 - 3
 number c = (1 + 2) * 3 - 4 * 5
